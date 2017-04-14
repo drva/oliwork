@@ -77,6 +77,8 @@ public class QuizConvert
  		boolean openQuestion=false;
  		//a flag for having opened an input tag
  		boolean openInputs=false;
+ 		//a flag for having an opened body tag
+ 		boolean openBody=false;
  		
  		String rightAnswerId="";
  		String questionId="";
@@ -91,6 +93,12 @@ public class QuizConvert
  		while(fromTextFile.hasNext())
  		{
  			hold = fromTextFile.nextLine();
+ 			//xml characters
+ 			hold = hold.replaceAll("&", "&amp;"); //goes first so it doesn't overwrite the others replacements after
+ 			hold = hold.replaceAll("<", "&lt;");
+ 			hold = hold.replaceAll(">", "&gt;");
+ 			hold = hold.replaceAll("'", "&apos;");
+ 			hold = hold.replaceAll("\"", "&quot;");
  			
  			//line with the question id
  			matcher=idLine.matcher(hold);
@@ -119,8 +127,11 @@ public class QuizConvert
  			matcher=answerCorrect.matcher(hold);
  			if(matcher.matches())
  			{
- 				if(!openInputs) //if we haven't already opened the inputs tag, open it
+ 				if(!openInputs) //if we haven't already opened the inputs tag, close body (including image handling) and open it
  				{
+ 					closeBody(toXMLFile, imageFolder, questionId);
+ 					openBody=false;
+ 					
  					toXMLFile.println("\t\t<input shuffle=\""+shuffle+"\">");
  					openInputs=true;
  				}
@@ -135,8 +146,11 @@ public class QuizConvert
  			matcher=answerIncorrect.matcher(hold);
  			if(matcher.matches())
  			{
- 				if(!openInputs) //if we haven't already opened the inputs tag, open it
+ 				if(!openInputs) //if we haven't already opened the inputs tag, close body (including image handling) and open it
  				{
+ 					closeBody(toXMLFile, imageFolder, questionId);
+ 					openBody=false;
+ 					
  					toXMLFile.println("\t\t<input shuffle=\""+shuffle+"\">");
  					openInputs=true;
  				}
@@ -145,21 +159,21 @@ public class QuizConvert
  				continue;
  			}
  			
- 			//body line (goes last because it'll overapply otherwise) (right now needs there to only be one)
+ 			if(hold.matches("\\s+")) //space lines
+ 				continue;
+ 			
+ 			//body line (is last to be default)
  			matcher=body.matcher(hold);
  			if(matcher.matches())
  			{
- 				toXMLFile.println("\t\t<body>"+matcher.group());
- 				
- 				//at the moment this converter can add in images in the following circumstances:
- 				//-there is one image which goes directly after the question body and is followed immediately by the multiple choices
- 				//-the images are saved with the format imageQUESTIONID.png, where QUESTIONID is the question id from the word file (as in 1.10, etc)
- 				File image = new File(imageFolder+"/image"+questionId+".png");
- 				if(image.exists())
+ 				if(!openBody) //if we haven't already opened the body tag, open it
  				{
- 					toXMLFile.println("\t\t\t<image src=\"../webcontent/"+"image"+questionId+".png\"/>");
+ 					toXMLFile.println("\t\t<body>");
+ 					openBody=true;
  				}
- 				toXMLFile.println("\t\t</body>");
+ 				toXMLFile.println("\t\t\t<p>"+matcher.group()+"</p>");
+ 				
+ 				//to enable multiple body lines, image processing and closing the body tag has been moved to inputs
  				continue;
  			}		
  		}
@@ -181,6 +195,19 @@ public class QuizConvert
 		
 		fromTextFile.close();
 		toXMLFile.close();
+	}
+	
+	public static void closeBody(PrintWriter toXMLFile, String imageFolder, String questionId)
+	{
+		//at the moment this converter can add in images in the following circumstances:
+ 		//-there is one image which goes directly after the question body and is followed immediately by the multiple choices
+ 		//-the images are saved with the format imageQUESTIONID.png, where QUESTIONID is the question id from the word file (as in 1.10, etc)
+ 		File image = new File(imageFolder+"/image"+questionId+".png");
+ 		if(image.exists())
+ 		{
+ 			toXMLFile.println("\t\t\t<image src=\"../webcontent/"+"image"+questionId+".png\"/>");
+ 		}
+ 		toXMLFile.println("\t\t</body>");
 	}
 	
 	public static void closeQuestion(PrintWriter toXMLFile)  throws IOException
