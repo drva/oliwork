@@ -5,6 +5,9 @@
 //fourth optional argument is whether to shuffle answers
 //fifth optional argument is the folder with the images
 
+//images that are anything other than 'there is one image and it is the last thing in body' need to be preprocessed in the text file
+//format example: INSERTIMAGE: image5.05a CAPTION: SCREEN A where caption is optional
+
 import java.io.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -13,7 +16,7 @@ import java.util.regex.Matcher;
 public class QuizConvert
 {
 	public static int maxAttemptsDefault = 2;
-	public static int pointsPerQDefault = 3;
+	public static int pointsPerQDefault = 1;
 	public static String shuffleDefault = "true";
 	public static String imageFolderDefault ="quizimages";
 	
@@ -90,6 +93,8 @@ public class QuizConvert
  		Pattern answerIncorrect = Pattern.compile("([a-z])\\.\\s*([\\s\\S]+)"); //whitespace has a * in case of typos
  		Pattern answerCorrect = Pattern.compile("\\*([a-z])\\.\\s*([\\s\\S]+)");
  		Pattern body = Pattern.compile("\\S+[\\s\\S]*"); //will cause an issue if a body line starts with whitespace...
+ 		Pattern prepImage = Pattern.compile("INSERTIMAGE: (\\S+)");
+ 		Pattern prepImageAndCap = Pattern.compile("INSERTIMAGE: (\\S+) CAPTION: ([\\s\\S]+)");
  		Matcher matcher;
  		//processing the file
  		while(fromTextFile.hasNext())
@@ -101,6 +106,22 @@ public class QuizConvert
  			hold = hold.replaceAll(">", "&gt;");
  			hold = hold.replaceAll("'", "&apos;");
  			hold = hold.replaceAll("\"", "&quot;");
+ 			
+ 			//preprocessed images
+ 			matcher=prepImageAndCap.matcher(hold);
+ 			if(matcher.matches())
+ 			{
+ 				toXMLFile.println("\t\t\t<image src=\"../webcontent/"+matcher.group(1)+".png\">");
+ 				toXMLFile.println("\t\t\t\t<caption>"+matcher.group(2)+"</caption>");
+ 				toXMLFile.println("\t\t\t</image>");
+ 				continue;
+ 			}
+ 			matcher=prepImage.matcher(hold);
+ 			if(matcher.matches())
+ 			{
+ 				toXMLFile.println("\t\t\t<image src=\"../webcontent/"+matcher.group(1)+".png\"/>");
+ 				continue;
+ 			}
  			
  			//line with the question id
  			matcher=idLine.matcher(hold);
