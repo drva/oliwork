@@ -79,12 +79,14 @@ public class QuizConvert
  		boolean openInputs=false;
  		//a flag for having an opened body tag
  		boolean openBody=false;
+ 		//a flag for having an opened choice tag
+ 		boolean openChoice=false;
  		
  		String rightAnswerId="";
  		String questionId="";
  		
  		String hold="";
- 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([0-9\\.]+)\\s*"); //first whitespace has + incase of typos
+ 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([a-z0-9\\.]+)\\s*"); //first whitespace has + incase of typos
  		Pattern answerIncorrect = Pattern.compile("([a-z])\\.\\s*([\\s\\S]+)"); //whitespace has a * in case of typos
  		Pattern answerCorrect = Pattern.compile("\\*([a-z])\\.\\s*([\\s\\S]+)");
  		Pattern body = Pattern.compile("\\S+[\\s\\S]*"); //will cause an issue if a body line starts with whitespace...
@@ -107,8 +109,9 @@ public class QuizConvert
  				//if our previous question's inputs are still open, close them, then handle the response part
  				if(openInputs)
  				{
-					closeInputsAndDoResponse(toXMLFile, rightAnswerId, pointsPerQ);
+					closeInputsAndDoResponse(openChoice, toXMLFile, rightAnswerId, pointsPerQ);
  					openInputs=false;
+ 					openChoice=false;
  				}
  				
  				//if our previous question is still open, close it
@@ -119,6 +122,9 @@ public class QuizConvert
  				}
  				questionId = matcher.group(1);
  				toXMLFile.println("\t<multiple_choice id=\""+"q"+matcher.group(1)+"\">"); //the q is there to make it an NCName
+ 				//open body tag
+ 				toXMLFile.println("\t\t<body>"); 
+ 				openBody=true;
  				openQuestion=true;
  				continue;
  			}
@@ -135,10 +141,18 @@ public class QuizConvert
  					toXMLFile.println("\t\t<input shuffle=\""+shuffle+"\">");
  					openInputs=true;
  				}
+ 				//if we have an open choice, close it
+ 				if(openChoice)
+ 				{
+ 					toXMLFile.println("\t\t\t</choice>");
+ 					openChoice=false;
+ 				}	
  				
  				rightAnswerId=matcher.group(1);
  					
- 				toXMLFile.println("\t\t\t<choice value=\""+matcher.group(1)+"\">"+matcher.group(2)+"</choice>");
+ 				toXMLFile.println("\t\t\t<choice value=\""+matcher.group(1)+"\">\n"+
+ 									"\t\t\t\t"+matcher.group(2));
+ 				openChoice=true;
  				continue;
  			}
  			
@@ -154,8 +168,16 @@ public class QuizConvert
  					toXMLFile.println("\t\t<input shuffle=\""+shuffle+"\">");
  					openInputs=true;
  				}
+ 				//if we have an open choice, close it
+ 				if(openChoice)
+ 				{
+ 					toXMLFile.println("\t\t\t</choice>");
+ 					openChoice=false;
+ 				}	
  					
- 				toXMLFile.println("\t\t\t<choice value=\""+matcher.group(1)+"\">"+matcher.group(2)+"</choice>");
+ 				toXMLFile.println("\t\t\t<choice value=\""+matcher.group(1)+"\">\n"+
+ 									"\t\t\t\t"+matcher.group(2));
+ 				openChoice=true;
  				continue;
  			}
  			
@@ -163,15 +185,11 @@ public class QuizConvert
  				continue;
  			
  			//body line (is last to be default)
+ 			//this now handles body lines and non-first-line choice lines
  			matcher=body.matcher(hold);
  			if(matcher.matches())
  			{
- 				if(!openBody) //if we haven't already opened the body tag, open it
- 				{
- 					toXMLFile.println("\t\t<body>");
- 					openBody=true;
- 				}
- 				toXMLFile.println("\t\t\t<p>"+matcher.group()+"</p>");
+ 				toXMLFile.println("\t\t\t\t<p>"+matcher.group()+"</p>");
  				
  				//to enable multiple body lines, image processing and closing the body tag has been moved to inputs
  				continue;
@@ -181,8 +199,9 @@ public class QuizConvert
  		//if we have open inputs or open question, take care of that
  		if(openInputs)
  		{
-			closeInputsAndDoResponse(toXMLFile, rightAnswerId, pointsPerQ);
+			closeInputsAndDoResponse(openChoice, toXMLFile, rightAnswerId, pointsPerQ);
  			openInputs=false;
+ 			openChoice=false;
  		}
  		if(openQuestion)
  		{
@@ -215,8 +234,12 @@ public class QuizConvert
 		toXMLFile.println("\t</multiple_choice>\n");
 	}
 	
-	public static void closeInputsAndDoResponse(PrintWriter toXMLFile, String rightAnswerId, String pointsPerQ) throws IOException
+	public static void closeInputsAndDoResponse(boolean openChoice, PrintWriter toXMLFile, String rightAnswerId, String pointsPerQ) throws IOException
 	{
+		if(openChoice)
+		{
+			toXMLFile.println("\t\t\t</choice>");
+		}
 		toXMLFile.println("\t\t</input>");
 		toXMLFile.println("\t\t<part>\n"+
         					"\t\t\t<response match=\""+rightAnswerId+"\" score=\""+pointsPerQ+"\">\n"+
