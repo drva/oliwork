@@ -5,7 +5,8 @@
 //fourth optional argument is whether to shuffle answers
 //fifth optional argument is the folder with the images
 
-//__content__ is bold
+//@@content@@ is bold (I made it __ but then realized that was used in fill in blanks)
+//^^^content^^^ is superscript
 
 //images that are anything other than 'there is one image and it is the last thing in body' need to be preprocessed in the text file
 //format example: INSERTIMAGE: image5.05a CAPTION: SCREEN A where caption is optional
@@ -68,7 +69,8 @@ public class QuizConvert
  		inputFileName = inputFileName.replaceAll("\"", "");
 		
 		//if the input filename has spaces (in which case it would have been submitted in quotes to be a command line argument) replace them with underscores to use as output filename and id
-		String fileId = inputFileName.replaceAll("\\s", "_");
+		//also take care of some other undesired characters
+		String fileId = idChars(inputFileName.replaceAll("\\s", "_"));
 		
 		Scanner fromTextFile = new Scanner(inputFile);
 		PrintWriter toXMLFile= new PrintWriter(fileId+".xml");
@@ -97,7 +99,7 @@ public class QuizConvert
  		String questionId="";
  		
  		String hold="";
- 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([a-z0-9\\.]+)\\s*"); //first whitespace has + incase of typos
+ 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([a-zA-Z0-9\\.]+)\\s*"); //first whitespace has + incase of typos
  		Pattern answerIncorrect = Pattern.compile("([a-z])\\.\\s*([\\s\\S]+)"); //whitespace has a * in case of typos
  		Pattern answerCorrect = Pattern.compile("\\*([a-z])\\.\\s*([\\s\\S]+)");
  		Pattern body = Pattern.compile("\\S+[\\s\\S]*"); //will cause an issue if a body line starts with whitespace...
@@ -131,8 +133,8 @@ public class QuizConvert
  				continue;
  			}
  			
- 			//line with the question id
- 			matcher=idLine.matcher(hold);
+ 			//line with the question id (with handling of xml character things)
+ 			matcher=idLine.matcher(xmlifyId(hold));
  			if(matcher.matches())
  			{
  				//if our previous question's inputs are still open, close them, then handle the response part
@@ -218,8 +220,8 @@ public class QuizConvert
  			matcher=body.matcher(hold);
  			if(matcher.matches())
  			{
- 				//the replaceAll handles bold
- 				toXMLFile.println("\t\t\t\t<p>"+matcher.group().replaceAll("__([\\s\\S]+)__","<em style=\"bold\">$1</em>")+"</p>");
+ 				//the replaceAll handles bold and superscript
+ 				toXMLFile.println("\t\t\t\t<p>"+matcher.group().replaceAll("@@([\\s\\S]+)@@","<em style=\"bold\">$1</em>").replaceAll("^^^([\\s\\S]+)^^^","<sup>$1</sup>")+"</p>");
  				
  				//to enable multiple body lines, image processing and closing the body tag has been moved to inputs
  				continue;
@@ -279,5 +281,34 @@ public class QuizConvert
           					"\t\t\t\t<feedback>Incorrect.</feedback>\n"+
         					"\t\t\t</response>\n"+
         					"\t\t</part>");
+	}
+	
+	//ids need a different way of dealing with the xml characters
+	public static String xmlifyId(String fixCharacters)
+	{
+		//xml characters
+ 		fixCharacters = fixCharacters.replaceAll("&amp;", "and"); 
+ 		fixCharacters = fixCharacters.replaceAll("&lt;", "");
+ 		fixCharacters = fixCharacters.replaceAll("&gt;", "");
+ 		fixCharacters = fixCharacters.replaceAll("&apos;", "");
+ 		fixCharacters = fixCharacters.replaceAll("&quot;", "");
+ 		
+ 		return fixCharacters;
+	}
+	
+	//this is mostly borrowed from ncName in OutlineConvert, but modified
+	public static String idChars(String fixCharacters)
+	{
+		//http://stackoverflow.com/questions/1631396/what-is-an-xsncname-type-and-when-should-it-be-used
+		//"The practical restrictions of NCName are that it cannot contain several symbol characters like :, @, $, %, &, /, +, ,, ;, whitespace characters or different parenthesis. Furthermore an NCName cannot begin with a number, dot or minus character although they can appear later in an NCName."
+		if(fixCharacters.length()>0 && fixCharacters.substring(0,1).matches("[0-9\\.\\-]")) //the first part allows it to deal with empty strings without throwing exceptions
+			fixCharacters = "_"+fixCharacters;
+		
+		fixCharacters = fixCharacters.replaceAll("&", "and"); 
+		fixCharacters = fixCharacters.replaceAll("[:@\\$%\\/\\+,;\\s\\(\\)\\[\\]\\{\\}]", "");
+		fixCharacters = fixCharacters.replaceAll("[’\\?]",""); //not sure if ncname but xml didn't like it
+		fixCharacters = fixCharacters.replaceAll("\\.","_"); //raphael had said to avoid .'s
+		
+		return fixCharacters;
 	}
 }
