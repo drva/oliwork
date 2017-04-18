@@ -1,9 +1,11 @@
-//first argument is name of file. Spaces will be retained in title, converted to underscores in file name and id. Underscores will become spaces in title
+//first argument is name of file. Spaces will be retained in title, converted to underscores in file name and id. Underscores will become spaces in title. xml characters are deleted
 //alternative, first argument is name of directory
 //second optional argument is max_attempts
 //third optional argument is points per question
 //fourth optional argument is whether to shuffle answers
 //fifth optional argument is the folder with the images
+
+//__content__ is bold
 
 //images that are anything other than 'there is one image and it is the last thing in body' need to be preprocessed in the text file
 //format example: INSERTIMAGE: image5.05a CAPTION: SCREEN A where caption is optional
@@ -58,6 +60,12 @@ public class QuizConvert
 	public static void processFile(File inputFile, String maxAttempts, String pointsPerQ, String shuffle, String imageFolder) throws IOException
 	{
 		String inputFileName = inputFile.getName().substring(0, inputFile.getName().lastIndexOf("."));
+		//xml characters
+ 		inputFileName = inputFileName.replaceAll("&", "and"); 
+ 		inputFileName = inputFileName.replaceAll("<", "");
+ 		inputFileName = inputFileName.replaceAll(">", "");
+ 		inputFileName = inputFileName.replaceAll("'", "");
+ 		inputFileName = inputFileName.replaceAll("\"", "");
 		
 		//if the input filename has spaces (in which case it would have been submitted in quotes to be a command line argument) replace them with underscores to use as output filename and id
 		String fileId = inputFileName.replaceAll("\\s", "_");
@@ -210,7 +218,8 @@ public class QuizConvert
  			matcher=body.matcher(hold);
  			if(matcher.matches())
  			{
- 				toXMLFile.println("\t\t\t\t<p>"+matcher.group()+"</p>");
+ 				//the replaceAll handles bold
+ 				toXMLFile.println("\t\t\t\t<p>"+matcher.group().replaceAll("__([\\s\\S]+)__","<em style=\"bold\">$1</em>")+"</p>");
  				
  				//to enable multiple body lines, image processing and closing the body tag has been moved to inputs
  				continue;
