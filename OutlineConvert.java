@@ -128,11 +128,12 @@ public class OutlineConvert
 				matcher.matches();
 				
 				checkAs = matcher.group(1).replaceAll("\\s","_");
+				checkAs = checkAs.replaceAll("&","and");
 				
 				for(int i=0; i<dirQuizzes.length; i++)
 				{
-					//if the name of the file contains the way the file was referenced in the outline
-					if(dirQuizzes[i].getName().contains(checkAs.subSequence(0, checkAs.length()))) //contains is apparently only for char sequences
+					//if the file is .xml and the name of the file contains the way the file was referenced in the outline
+					if(dirQuizzes[i].getName().matches("[\\s\\S]+\\.xml") && dirQuizzes[i].getName().contains(checkAs.subSequence(0, checkAs.length()))) //contains is apparently only for char sequences
 					{
 						if(dirQuizzes[i].getName().matches("[\\S\\s]*?\\d\\d[\\S\\s]*") && !checkAs.matches("[\\S\\s]*?\\d\\d[\\S\\s]*")) //if the quiz name has a 2 digit number and the ref doesn't, don't put that quiz in (this is to stop Ch 1 from pulling in the Ch 10 quiz, etc)
 							continue;
