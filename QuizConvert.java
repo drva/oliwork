@@ -221,7 +221,7 @@ public class QuizConvert
  			if(matcher.matches())
  			{
  				//the replaceAll handles bold and superscript
- 				toXMLFile.println("\t\t\t\t<p>"+matcher.group().replaceAll("@@([\\s\\S]+)@@","<em style=\"bold\">$1</em>").replaceAll("^^^([\\s\\S]+)^^^","<sup>$1</sup>")+"</p>");
+ 				toXMLFile.println("\t\t\t\t<p>"+matcher.group().replaceAll("@@([\\s\\S]+)@@","<em style=\"bold\">$1</em>").replaceAll("\\^\\^\\^([\\s\\S]+)\\^\\^\\^","<sup>$1</sup>")+"</p>");
  				
  				//to enable multiple body lines, image processing and closing the body tag has been moved to inputs
  				continue;
