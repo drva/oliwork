@@ -1,6 +1,8 @@
 //args 0 is the outline text file
 //args 1 is the folder to put the workbook pages in
 //args 2 is the folder the quizzes are in
+//args 3 is the folder the slides are in
+//args 4 is the folder the papers are in
 //system.out outputs the org file text
 
 import java.io.*;
@@ -13,6 +15,8 @@ public class OutlineConvert
 	public static String regExUnit = "Unit \\d+:: ([\\s\\S]+?)\\s*";
 	public static String regExModule = "Module \\d+/ ([\\s\\S]+?)\\s*";
 	public static String regExQuiz = "([\\s\\S]+?) quiz[\\s]*";
+	public static String regExSlides = "([\\s\\S]+? slides) \\[([\\s\\S]+?)\\]";
+	public static String regExPapers = "([\\s\\S]+?): ([\\s\\S]+?) \\[([\\s\\S]+?)…?\\]";
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -24,6 +28,8 @@ public class OutlineConvert
 		boolean openPage=false;
 		
 		File[] dirQuizzes = new File(args[2]).listFiles();
+		File[] dirSlides = new File(args[3]).listFiles();
+		File[] dirPapers = new File(args[4]).listFiles();
 		
 		String hold;
 		Pattern pattern;
@@ -31,10 +37,15 @@ public class OutlineConvert
 		String id;
 		String title;
 		String checkAs;
+		Boolean couldntHandle=false;
 		PrintWriter toCourseFile=null;
 		while(fromTextFile.hasNext())
 		{
 			hold = fromTextFile.nextLine();
+			
+			//blank lines and space lines
+			if(hold.equals("") || hold.matches("[\\s]+"))
+				continue;
 			
 			//units
 			if(hold.matches(regExUnit))
@@ -114,8 +125,7 @@ public class OutlineConvert
 								"\t<head>\n"+
 								"\t\t<title>"+title+"</title>\n"+
 								"\t</head>\n"+
-								"\t<body>\n"+
-								"\t\t<p>(This space intentionally left blank.)</p>\n");
+								"\t<body>\n");
 				openPage=true;
 				continue;
 			}
@@ -135,7 +145,7 @@ public class OutlineConvert
 					//if the file is .xml and the name of the file contains the way the file was referenced in the outline
 					if(dirQuizzes[i].getName().matches("[\\s\\S]+\\.xml") && dirQuizzes[i].getName().contains(checkAs.subSequence(0, checkAs.length()))) //contains is apparently only for char sequences
 					{
-						if(dirQuizzes[i].getName().matches("[\\S\\s]*?\\d\\d[\\S\\s]*") && !checkAs.matches("[\\S\\s]*?\\d\\d[\\S\\s]*")) //if the quiz name has a 2 digit number and the ref doesn't, don't put that quiz in (this is to stop Ch 1 from pulling in the Ch 10 quiz, etc)
+						if(dirQuizzes[i].getName().matches("[\\D]*?\\d\\d[\\D]*") && !checkAs.matches("[\\S\\s]*?\\d\\d[\\S\\s]*")) //if the quiz name has a 2 digit number and the ref doesn't, don't put that quiz in (this is to stop Ch 1 from pulling in the Ch 10 quiz, etc) {modified to avoid issues with 2013 in Data discovery}
 							continue;
 						
 						toCourseFile.println("\t\t<activity idref=\""+dirQuizzes[i].getName().split(".xml")[0]+"\" purpose = \"quiz\"/>");
@@ -143,6 +153,55 @@ public class OutlineConvert
 				}
 				continue;
 			}
+			
+			//slides
+			if(hold.matches(regExSlides))
+			{
+				pattern = Pattern.compile(regExSlides);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				checkAs = matcher.group(2);
+				
+				//matching to the file name, or the first part thereof (for the L#'s), or the file name without extension
+				for(int i=0; i<dirSlides.length; i++)
+				{
+					if(checkAs.equals(dirSlides[i].getName()) || checkAs.equals(dirSlides[i].getName().split(".pptx")[0])|| checkAs.equals(dirSlides[i].getName().split("-")[0]))
+					{
+						toCourseFile.println("\t\t<p><link href=\"../webcontent/slides/"+dirSlides[i].getName()+"\">"+xmlifyContent(matcher.group(1))+"</link></p>");
+					}
+				}
+				continue;
+			}
+			
+			//papers
+			if(hold.matches(regExPapers))
+			{
+				pattern = Pattern.compile(regExPapers);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				checkAs = matcher.group(3);
+				
+				couldntHandle=true; //for papers the converter can't match up atm
+				//if filename matches ref, or filename without.pdf matches ref, or as much of filename as ref has matches ref
+				for(int i=0; i<dirPapers.length; i++)
+				{
+					if(checkAs.equals(dirPapers[i].getName()) || checkAs.equals(dirPapers[i].getName().split(".pdf")[0])|| checkAs.equals(dirPapers[i].getName().split(".pdf")[0].substring(0,Math.min(dirPapers[i].getName().split(".pdf")[0].length(),checkAs.length())))) //min is in there to avoid index out of bounds when it checks other filenames
+					{
+						toCourseFile.println("\t\t<p>"+xmlifyContent(matcher.group(1))+": <link href=\"../webcontent/papers/"+dirPapers[i].getName()+"\">"+xmlifyContent(matcher.group(2))+"</link></p>");
+						couldntHandle=false;
+					}
+				}
+				if(couldntHandle)
+				{
+					toCourseFile.println("\t\t<p>!!"+xmlifyContent(hold)+"</p>");
+					couldntHandle=false;
+				}
+				continue;
+			}
+			
+			toCourseFile.println("\t\t<p>"+xmlifyContent(hold)+"</p>");
 		}
 		
 		//close tags if needed
@@ -161,6 +220,17 @@ public class OutlineConvert
 			closeUnit();
 			openUnit=false;
 		}		
+	}
+	
+	public static String xmlifyContent(String fixCharacters)
+	{
+		fixCharacters = fixCharacters.replaceAll("&", "&amp;"); //goes first so it doesn't overwrite the others replacements after
+ 		fixCharacters = fixCharacters.replaceAll("<", "&lt;");
+ 		fixCharacters = fixCharacters.replaceAll(">", "&gt;");
+ 		fixCharacters = fixCharacters.replaceAll("'", "&apos;");
+ 		fixCharacters = fixCharacters.replaceAll("\"", "&quot;");
+ 		
+ 		return fixCharacters;
 	}
 	
 	public static String xmlifyTitleId(String fixCharacters)
