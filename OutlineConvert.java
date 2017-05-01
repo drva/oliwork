@@ -18,6 +18,7 @@ public class OutlineConvert
 	public static String regExSlides = "([\\s\\S]+? slides) \\[([\\s\\S]+?)\\]";
 	public static String regExPapers = "([\\s\\S]+?): ([\\s\\S]+?) \\[([\\s\\S]+?)…?\\]";
 	public static String regExPapers2 = "([\\s\\S]+? paper) \\[([\\s\\S]+?)…?\\]"; //for the optional reading
+	public static String regExLinks = "([\\s\\S]+?: )?([\\s\\S]+?) \\[link attached\\]<([\\s\\S]+?)>([\\s\\S]*)";
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -222,6 +223,18 @@ public class OutlineConvert
 				continue;
 			}
 			
+			//links
+			if(hold.matches(regExLinks))
+			{
+				pattern = Pattern.compile(regExLinks);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				toCourseFile.println("\t\t<p>"+xmlifyContent(matcher.group(1))+"<link href=\""+matcher.group(3)+"\">"+xmlifyContent(matcher.group(2))+"</link>"+xmlifyContent(matcher.group(4))+"</p>");
+				
+				continue;
+			}
+			
 			toCourseFile.println("\t\t<p>"+xmlifyContent(hold)+"</p>");
 		}
 		
@@ -245,6 +258,9 @@ public class OutlineConvert
 	
 	public static String xmlifyContent(String fixCharacters)
 	{
+		if(fixCharacters == null) //since I pass in a matcher group that is null for part of link handling 
+			return "";
+		
 		fixCharacters = fixCharacters.replaceAll("&", "&amp;"); //goes first so it doesn't overwrite the others replacements after
  		fixCharacters = fixCharacters.replaceAll("<", "&lt;");
  		fixCharacters = fixCharacters.replaceAll(">", "&gt;");
