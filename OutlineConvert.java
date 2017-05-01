@@ -74,8 +74,8 @@ public class OutlineConvert
 				title=matcher.group(1);
 				id = ncName(matcher.group(1).replaceAll("\\s","_"));
 				
-				System.out.println("\t\t\t<unit id=\""+id+"\">");
-				System.out.println("\t\t\t\t<title>"+title+"</title>");
+				//System.out.println("\t\t\t<unit id=\""+id+"\">");
+				//System.out.println("\t\t\t\t<title>"+title+"</title>");
 				openUnit = true;
 				continue;
 			}
@@ -105,15 +105,15 @@ public class OutlineConvert
 				if(id.length()>56) //I'm having an error and wondering if it's due to length
 					id=id.substring(0,57);
 				
-				System.out.println("\t\t\t\t<module id=\""+id+"\">");
-				System.out.println("\t\t\t\t\t<title>"+title+"</title>");
+				//System.out.println("\t\t\t\t<module id=\""+id+"\">");
+				//System.out.println("\t\t\t\t\t<title>"+title+"</title>");
 				openModule = true;
 				
 				//page
 				//the org file text
-				System.out.println("\t\t\t\t<item>\n"+
+				/*System.out.println("\t\t\t\t<item>\n"+
 									"\t\t\t\t\t<resourceref idref=\""+id+"\"/>\n"+
-									"\t\t\t\t</item>");
+									"\t\t\t\t</item>");*/
 									
 				//the workbook page
 				toCourseFile = new PrintWriter(args[1]+"/"+id+".xml");
@@ -182,12 +182,16 @@ public class OutlineConvert
 				matcher.matches();
 				
 				checkAs = matcher.group(3);
+				String checkAsUnifySpace = checkAs.replaceAll("[_\\-\\s&\\.\\,]", "");
+				String filenameUnifySpace = "";
 				
 				couldntHandle=true; //for papers the converter can't match up atm
-				//if filename matches ref, or filename without.pdf matches ref, or as much of filename as ref has matches ref
+				//if filename matches ref, or filename without.pdf matches ref, or as much of filename as ref has matches ref, or all those but with the UnifySpace versions
 				for(int i=0; i<dirPapers.length; i++)
 				{
-					if(checkAs.equals(dirPapers[i].getName()) || checkAs.equals(dirPapers[i].getName().split(".pdf")[0])|| checkAs.equals(dirPapers[i].getName().split(".pdf")[0].substring(0,Math.min(dirPapers[i].getName().split(".pdf")[0].length(),checkAs.length())))) //min is in there to avoid index out of bounds when it checks other filenames
+					filenameUnifySpace = dirPapers[i].getName().replaceAll("[_\\-\\s&\\.\\,]", "");
+					
+					if((checkAs.equals(dirPapers[i].getName()) || checkAs.equals(dirPapers[i].getName().split(".pdf")[0])|| checkAs.equals(dirPapers[i].getName().split(".pdf")[0].substring(0,Math.min(dirPapers[i].getName().split(".pdf")[0].length(),checkAs.length())))) || (checkAsUnifySpace.equalsIgnoreCase(filenameUnifySpace) || checkAsUnifySpace.equalsIgnoreCase(filenameUnifySpace.split("pdf")[0])|| checkAsUnifySpace.equalsIgnoreCase(filenameUnifySpace.split("pdf")[0].substring(0,Math.min(filenameUnifySpace.split("pdf")[0].length(),checkAsUnifySpace.length()))))) //min is in there to avoid index out of bounds when it checks other filenames
 					{
 						toCourseFile.println("\t\t<p>"+xmlifyContent(matcher.group(1))+": <link href=\"../webcontent/papers/"+dirPapers[i].getName()+"\">"+xmlifyContent(matcher.group(2))+"</link></p>");
 						couldntHandle=false;
@@ -197,6 +201,7 @@ public class OutlineConvert
 				{
 					toCourseFile.println("\t\t<p>!!"+xmlifyContent(hold)+"</p>");
 					couldntHandle=false;
+					System.out.println(hold);
 				}
 				continue;
 			}
@@ -267,11 +272,11 @@ public class OutlineConvert
 	
 	public static void closeModule()
 	{
-		System.out.println("\t\t\t\t</module>");
+		//System.out.println("\t\t\t\t</module>");
 	}
 	
 	public static void closeUnit()
 	{
-		System.out.println("\t\t\t</unit>");
+		//System.out.println("\t\t\t</unit>");
 	}
 }
