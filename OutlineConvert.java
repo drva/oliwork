@@ -17,6 +17,7 @@ public class OutlineConvert
 	public static String regExQuiz = "([\\s\\S]+?) quiz[\\s]*";
 	public static String regExSlides = "([\\s\\S]+? slides) \\[([\\s\\S]+?)\\]";
 	public static String regExPapers = "([\\s\\S]+?): ([\\s\\S]+?) \\[([\\s\\S]+?)…?\\]";
+	public static String regExPapers2 = "([\\s\\S]+? paper) \\[([\\s\\S]+?)…?\\]"; //for the optional reading
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -175,13 +176,24 @@ public class OutlineConvert
 			}
 			
 			//papers
-			if(hold.matches(regExPapers))
+			if(hold.matches(regExPapers) || hold.matches(regExPapers2))
 			{
-				pattern = Pattern.compile(regExPapers);
-				matcher = pattern.matcher(hold);
-				matcher.matches();
+				if(hold.matches(regExPapers)) //this one goes first because some that have this format also do contain the word papers, and I want it to use this format if it matches
+				{
+					pattern = Pattern.compile(regExPapers);
+					matcher = pattern.matcher(hold);
+					matcher.matches();
 				
-				checkAs = matcher.group(3);
+					checkAs = matcher.group(3);
+				}
+				else //so, for the regExPapers2 ones
+				{
+					pattern = Pattern.compile(regExPapers2);
+					matcher = pattern.matcher(hold);
+					matcher.matches();
+				
+					checkAs = matcher.group(2);
+				}
 				String checkAsUnifySpace = checkAs.replaceAll("[_\\-\\s&\\.\\,]", "");
 				String filenameUnifySpace = "";
 				
@@ -193,7 +205,11 @@ public class OutlineConvert
 					
 					if((checkAs.equals(dirPapers[i].getName()) || checkAs.equals(dirPapers[i].getName().split(".pdf")[0])|| checkAs.equals(dirPapers[i].getName().split(".pdf")[0].substring(0,Math.min(dirPapers[i].getName().split(".pdf")[0].length(),checkAs.length())))) || (checkAsUnifySpace.equalsIgnoreCase(filenameUnifySpace) || checkAsUnifySpace.equalsIgnoreCase(filenameUnifySpace.split("pdf")[0])|| checkAsUnifySpace.equalsIgnoreCase(filenameUnifySpace.split("pdf")[0].substring(0,Math.min(filenameUnifySpace.split("pdf")[0].length(),checkAsUnifySpace.length()))))) //min is in there to avoid index out of bounds when it checks other filenames
 					{
-						toCourseFile.println("\t\t<p>"+xmlifyContent(matcher.group(1))+": <link href=\"../webcontent/papers/"+dirPapers[i].getName()+"\">"+xmlifyContent(matcher.group(2))+"</link></p>");
+						if(hold.matches(regExPapers))
+							toCourseFile.println("\t\t<p>"+xmlifyContent(matcher.group(1))+": <link href=\"../webcontent/papers/"+dirPapers[i].getName()+"\">"+xmlifyContent(matcher.group(2))+"</link></p>");
+						else
+							toCourseFile.println("\t\t<p><link href=\"../webcontent/papers/"+dirPapers[i].getName()+"\">"+xmlifyContent(matcher.group(1))+"</link></p>");
+							
 						couldntHandle=false;
 					}
 				}
