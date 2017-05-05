@@ -9,10 +9,10 @@ import java.util.HashMap;
 public class BibConvert
 {
 	//http://stackoverflow.com/questions/27498106/regular-expression-named-capturing-groups-support-in-java-7
-	public static String regExArticle = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)\\.\\s(?<title>[\\s\\S]+?)\\.\\s(?<journal>[\\s\\S]+?)[\\.\\,]\\s(?<volume>[\\d\\(\\)\\s]+)[\\,:;]\\s(?<pages>[p\\d\\-\\s–]+)\\.?"; //notes: the two dashes in pages are apparently different
-	public static String regExBook2 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)\\.\\s(?<title>[\\s\\S]+?)\\.\\s(?<address>[\\s\\S]+?):\\s(?<publisher>[\\s\\S]+?)";
+	public static String regExArticle = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<journal>[\\s\\S]+?)[\\.\\,]\\s(?<volume>[\\d\\(\\)\\s]+)[\\,:;]\\s(?<pages>[p\\d\\-\\s–]+)\\.?"; //notes: the two dashes in pages are apparently different
+	public static String regExBook2 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<address>[\\s\\S]+?):\\s(?<publisher>[\\s\\S]+?)";
 	//Dobelli, R. (2015). The Art of Thinking Clearly. New York, NY: HarperCollins
-	public static String regExBook1 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)\\.\\s(?<title>[\\s\\S]+?)\\.\\s(?<publisher>[\\s\\S]+?)\\,\\s(?<address>[\\s\\S]+?)";
+	public static String regExBook1 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<publisher>[\\s\\S]+?)\\,\\s(?<address>[\\s\\S]+?)";
 	//Kahneman, D. (2011). Thinking, Fast and Slow. Penguin Group, London
 	//^this is currently overmatching the 'article in book'. Also to the one with the dx.doi webaddress but that seems fairly acceptable
 	public static void main(String[] args) throws IOException
@@ -98,7 +98,10 @@ public class BibConvert
 				
 				toXMLFile.println("\t\t<bib:entry id=\""+id+"\">");
 				toXMLFile.println("\t\t\t<bib:book>");
-				toXMLFile.println("\t\t\t\t<bib:author>"+xmlifyContent(matcher.group("authors"))+"</bib:author>");
+				if(matcher.group("authors").matches("[\\s\\S]+? \\(ed\\)")) //if it caught an editor in the authors space
+					toXMLFile.println("\t\t\t\t<bib:editor>"+xmlifyContent(matcher.group("authors"))+"</bib:editor>");
+				else
+					toXMLFile.println("\t\t\t\t<bib:author>"+xmlifyContent(matcher.group("authors"))+"</bib:author>");
 				toXMLFile.println("\t\t\t\t<bib:title>"+xmlifyContent(matcher.group("title"))+"</bib:title>");
 				toXMLFile.println("\t\t\t\t<bib:publisher>"+xmlifyContent(matcher.group("publisher"))+"</bib:publisher>");
 				toXMLFile.println("\t\t\t\t<bib:year>"+xmlifyContent(matcher.group("year"))+"</bib:year>");
