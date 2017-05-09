@@ -16,7 +16,8 @@ public class BibConvert
 	//Dobelli, R. (2015). The Art of Thinking Clearly. New York, NY: HarperCollins
 	public static String regExBook1 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<publisher>[\\s\\S]+?)\\,\\s(?<address>[\\s\\S]+?)";
 	//Kahneman, D. (2011). Thinking, Fast and Slow. Penguin Group, London
-	//^this is currently overmatching the 'article in book'. Also to the one with the dx.doi webaddress but that seems fairly acceptable
+	//{has been fixed with addition of article in book handling}->^this is currently overmatching the 'article in book'. 
+	//Also to the one with the dx.doi webaddress but that seems fairly acceptable
 	public static void main(String[] args) throws IOException
 	{
 		
@@ -96,17 +97,17 @@ public class BibConvert
 				id = makeEntryId(protoId, authorsForId);
 				
 				toXMLFile.println("\t\t<bib:entry id=\""+id+"\">");
-				toXMLFile.println("\t\t\t<bib:inbook>");
+				toXMLFile.println("\t\t\t<bib:incollection>");
 				toXMLFile.println("\t\t\t\t<bib:author>"+xmlifyContent(matcher.group("authors"))+"</bib:author>");
 				toXMLFile.println("\t\t\t\t<bib:title>"+xmlifyContent(matcher.group("title"))+"</bib:title>");
 				toXMLFile.println("\t\t\t\t<bib:booktitle>"+xmlifyContent(matcher.group("booktitle"))+"</bib:booktitle>");
+				toXMLFile.println("\t\t\t\t<bib:publisher>"+xmlifyContent(matcher.group("publisher"))+"</bib:publisher>");
 				toXMLFile.println("\t\t\t\t<bib:year>"+xmlifyContent(matcher.group("year"))+"</bib:year>");
 				toXMLFile.println("\t\t\t\t<bib:editor>"+xmlifyContent(matcher.group("editors"))+"</bib:editor>");
 				if(matcher.group("pages")!=null)
 					toXMLFile.println("\t\t\t\t<bib:pages>"+xmlifyContent(matcher.group("pages"))+"</bib:pages>");
-				toXMLFile.println("\t\t\t\t<bib:publisher>"+xmlifyContent(matcher.group("publisher"))+"</bib:publisher>");
 				toXMLFile.println("\t\t\t\t<bib:address>"+xmlifyContent(matcher.group("address"))+"</bib:address>");
-				toXMLFile.println("\t\t\t</bib:inbook>");
+				toXMLFile.println("\t\t\t</bib:incollection>");
 				toXMLFile.println("\t\t</bib:entry>");
 				
 				continue;
