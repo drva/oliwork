@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher; 
 import java.util.HashMap;
+import java.util.ArrayList;
 
 public class BibConvert
 {
@@ -40,6 +41,7 @@ public class BibConvert
 								"\t<bib:file>\n");
 		
 		HashMap<String, Integer> authorsForId = new HashMap<String, Integer>();
+		ArrayList<String> notHandled = new ArrayList<String>();
 		String hold="";
 		Pattern pattern;
 		Matcher matcher;
@@ -47,6 +49,7 @@ public class BibConvert
 		String id;
 		int countCites =0;
 		int countHandled=0;
+		String[] forMiscId;
 		//go through the text file
 		while(fromTextFile.hasNext())
 		{
@@ -145,7 +148,37 @@ public class BibConvert
 				continue;
 			}
 			
+			notHandled.add(hold);
 			System.out.println(hold);
+		}
+		
+		//put anything not handled in a misc entry as a note
+		for(int i=0; i<notHandled.size(); i++)
+		{
+			forMiscId = notHandled.get(i).split("[\\.\\,;:\\?…\\s]+");
+			
+			//if the first two 'words' for start with a capital letter (so, possibly the author), use them as the proto id
+			//otherwise, use the first non-beginning word that does start with one
+			//otherwise use the last word
+			protoId = forMiscId[forMiscId.length-1];
+			if(forMiscId[0].substring(0,1).matches("[A-Z]") && forMiscId.length>1 && forMiscId[1].substring(0,1).matches("[A-Z]"))
+				protoId = forMiscId[0] + forMiscId[1];
+			else
+				for(int j=1; j<forMiscId.length; j++) //the first word often just starts with a capital letter even if not important, so unless it met the prior condition, we skip that one
+				{
+					if(forMiscId[j].substring(0,1).matches("[A-Z]"))
+					{
+						protoId = forMiscId[j];
+						break;
+					}
+				}	
+			id = makeEntryId(protoId, authorsForId);
+			
+			toXMLFile.println("\t\t<bib:entry id=\""+id+"\">");
+			toXMLFile.println("\t\t\t<bib:misc>");
+			toXMLFile.println("\t\t\t\t<bib:note>"+xmlifyContent(notHandled.get(i))+"</bib:note>");
+			toXMLFile.println("\t\t\t</bib:misc>");
+			toXMLFile.println("\t\t</bib:entry>");
 		}
 		
 		toXMLFile.println("\t</bib:file>\n"+
@@ -164,6 +197,7 @@ public class BibConvert
 		
 		fixCharacters = fixCharacters.replaceAll("[:@\\$%&\\/\\+,;\\s\\(\\)\\[\\]\\{\\}]", "");
 		fixCharacters = fixCharacters.replaceAll("[’\\?]",""); //not sure if ncname but xml didn't like it
+		fixCharacters = fixCharacters.replaceAll("[\"\']",""); //added here, xml didn't like either
 		
 		return fixCharacters;
 	}
