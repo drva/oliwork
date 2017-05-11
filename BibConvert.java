@@ -1,5 +1,7 @@
 //args 0 is the input file name
 
+//@@@ in text file sets off things at beginning of citations to be ignored (like 'Source: ')
+
 import java.io.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -19,6 +21,7 @@ public class BibConvert
 	//Kahneman, D. (2011). Thinking, Fast and Slow. Penguin Group, London
 	//{has been fixed with addition of article in book handling}->^this is currently overmatching the 'article in book'. 
 	//Also to the one with the dx.doi webaddress but that seems fairly acceptable
+	public static String regExAuthorYearTitleHow = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<moreinfo>[\\s\\S]+?)\\.?";
 	public static void main(String[] args) throws IOException
 	{
 		
@@ -42,6 +45,8 @@ public class BibConvert
 		
 		HashMap<String, Integer> authorsForId = new HashMap<String, Integer>();
 		ArrayList<String> notHandled = new ArrayList<String>();
+		String authorYearTitleHow="";
+		String partialProcessing="";
 		String hold="";
 		Pattern pattern;
 		Matcher matcher;
@@ -49,6 +54,7 @@ public class BibConvert
 		String id;
 		int countCites =0;
 		int countHandled=0;
+		int countPartial=0;
 		String[] forMiscId;
 		//go through the text file
 		while(fromTextFile.hasNext())
@@ -148,9 +154,40 @@ public class BibConvert
 				continue;
 			}
 			
+			//author-year-title-howpublished
+			if(hold.matches(regExAuthorYearTitleHow))
+			{
+				countPartial++;
+				
+				pattern = Pattern.compile(regExAuthorYearTitleHow);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				//at the moment using the first author's last name, with numbering using the hashmap to keep track to avoid repetitions
+				protoId = matcher.group("authors").split(",")[0]; 
+				id = makeEntryId(protoId, authorsForId);
+				
+				//these are written into a string to be put in the file all together later
+				authorYearTitleHow = authorYearTitleHow +"\t\t<bib:entry id=\""+id+"\">\n";
+				//was going to code as articles atm because most of the ones in this format in the current file seem to be (not all), but that turns out to require a journal item.
+				authorYearTitleHow = authorYearTitleHow +"\t\t\t<bib:misc>\n";
+				authorYearTitleHow = authorYearTitleHow +"\t\t\t\t<bib:author>"+xmlifyContent(matcher.group("authors"))+"</bib:author>\n";
+				authorYearTitleHow = authorYearTitleHow +"\t\t\t\t<bib:title>"+xmlifyContent(matcher.group("title"))+"</bib:title>\n";
+				authorYearTitleHow = authorYearTitleHow +"\t\t\t\t<bib:howpublished>"+xmlifyContent(matcher.group("moreinfo"))+"</bib:howpublished>\n";
+				authorYearTitleHow = authorYearTitleHow +"\t\t\t\t<bib:year>"+xmlifyContent(matcher.group("year"))+"</bib:year>\n";
+				authorYearTitleHow = authorYearTitleHow +"\t\t\t</bib:misc>\n";
+				authorYearTitleHow = authorYearTitleHow +"\t\t</bib:entry>\n";
+				
+				continue;
+			}
+			
 			notHandled.add(hold);
 			System.out.println(hold);
 		}
+		
+		toXMLFile.println();
+		
+		toXMLFile.println(authorYearTitleHow);
 		
 		//put anything not handled in a misc entry as a note
 		for(int i=0; i<notHandled.size(); i++)
@@ -185,7 +222,7 @@ public class BibConvert
 							"</workbook_page>");
 		toXMLFile.close();
 		
-		System.out.println(countHandled+" citations handled out of "+countCites+". "+(countCites-countHandled)+" not handled.");
+		System.out.println(countHandled+" citations handled, "+countPartial+" citations partially handled out of "+countCites+". "+(countCites-countHandled-countPartial)+" not handled.");
 	}
 	
 	public static String ncName(String fixCharacters) //taken from OutlineConvert
@@ -219,6 +256,7 @@ public class BibConvert
 	public static String makeEntryId(String protoId, HashMap<String, Integer> authorsForId)
 	{
 		protoId = ncName(protoId);
+		protoId = protoId.replaceAll("\\.", "");
 		
 		if(authorsForId.get(protoId) != null) //if we've already used this author
 		{
