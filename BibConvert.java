@@ -13,8 +13,9 @@ public class BibConvert
 {
 	//http://stackoverflow.com/questions/27498106/regular-expression-named-capturing-groups-support-in-java-7
 	public static String regExArticle = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<journal>[\\s\\S]+?)[\\.\\,]\\s(?<volume>[\\d\\(\\)\\s]+)[\\,:;]\\s(?<pages>[p\\d\\-\\s–]+)\\.?"; //notes: the two dashes in pages are apparently different
-	public static String regExArticleInBook = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,:]?\\s(?<title>[\\s\\S]+?)\\.\\sIn:?\\s(?<editors>[\\s\\S]+?)\\s\\(Eds?\\.\\)[\\,\\.:]\\s(?<booktitle>[\\s\\S]+?)(\\.|(\\s\\((?<pages>[p\\d\\-\\s–\\.]+)\\)\\.))\\s(?<address>[\\s\\S]+?):\\s(?<publisher>[\\s\\S]+?)\\.?\\s?";
+	public static String regExArticleInBook1 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,:]?\\s(?<title>[\\s\\S]+?)\\.\\s[Ii]n:?\\s(?<editors>[\\s\\S]+?)\\s\\(Eds?\\.\\)[\\,\\.:]\\s(?<booktitle>[\\s\\S]+?)(\\.|(\\s\\((?<pages>[p\\d\\-\\s–\\.]+)\\)\\.))\\s(?<address>[\\s\\S]+?):\\s(?<publisher>[\\s\\S]+?)\\.?\\s?";
 	//Kohler, D. J., Brenner, L., & Griffin, D. (2002). The calibration of expert judgment: Heuristics and biases beyond the laboratory. In T. Gilovich, D. Griffin, & D. Kahneman (Eds.), Heuristics and biases: The psychology of intuitive judgment (pp. 686- 715). New York, NY: Cambridge University Press. 
+	public static String regExArticleInBook2 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,:]?\\s(?<title>[\\s\\S]+?)\\.\\s[Ii]n:?\\s(?<editors>[\\s\\S]+?)\\s\\(Eds?\\.\\)[\\,\\.:]\\s(?<booktitle>[\\s\\S]+?)(\\.|(\\s\\((?<pages>[p\\d\\-\\s–\\.]+)\\)\\.))\\s(?<publisher>[\\s\\S]+?)\\,\\s(?<address>[\\s\\S]+?)\\.?\\s?";
 	public static String regExBook2 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<address>[\\s\\S]+?):\\s(?<publisher>[\\s\\S]+?)";
 	//Dobelli, R. (2015). The Art of Thinking Clearly. New York, NY: HarperCollins
 	public static String regExBook1 = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<publisher>[\\s\\S]+?)\\,\\s(?<address>[\\s\\S]+?)";
@@ -93,11 +94,14 @@ public class BibConvert
 			}
 			
 			//articles in book (before book to avoid book overmatching)
-			if(hold.matches(regExArticleInBook))
+			if(hold.matches(regExArticleInBook1) || hold.matches(regExArticleInBook2))
 			{
 				countHandled++;
 				
-				pattern = Pattern.compile(regExArticleInBook);
+				if(hold.matches(regExArticleInBook1)) 
+					pattern = Pattern.compile(regExArticleInBook1);
+				else
+					pattern = Pattern.compile(regExArticleInBook2);
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
