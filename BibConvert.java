@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher; 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class BibConvert
 {
@@ -23,6 +24,15 @@ public class BibConvert
 	//{has been fixed with addition of article in book handling}->^this is currently overmatching the 'article in book'. 
 	//Also to the one with the dx.doi webaddress but that seems fairly acceptable
 	public static String regExAuthorYearTitleHow = "(?<authors>[\\s\\S]+?)\\s+\\((?<year>\\d\\d\\d\\d)\\)[\\.\\,]?\\s(?<title>[\\s\\S]+?)\\.\\s(?<moreinfo>[\\s\\S]+?)\\.?";
+	
+	//for partial processing
+	public static String regExBeginningForPartial = "(?<pre>[\\s\\S]*?)";
+	public static String regExEndForPartial = "(?<post>[\\s\\S]*)";
+	public static String regExYearForPartial = "(?<year>\\d\\d\\d\\d)";
+	public static String regExMonthForPartial = "(?<month>(\\d{1,2}\\s)?((January|February|March|April|May|June|July|August|September|October|November|December)|((Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec).?))(\\s\\d{1,2})?)"; //day is included with month since there's no other space for it
+	public static String regExTitleForPartial = "(?<title>[\"“”][\\s\\S]+?[\"”])"; //for typos purposes I am permitting a close quote beginning a quote
+	public static String regExURLForPartial = "(?<url>[\\S]*?(http|://|www.)[\\S]+)";
+	
 	public static void main(String[] args) throws IOException
 	{
 		
@@ -49,6 +59,9 @@ public class BibConvert
 		String authorYearTitleHow="";
 		String partialProcessing="";
 		String hold="";
+		String hold2="";
+		String temp="";
+		String partialInProgress="";
 		Pattern pattern;
 		Matcher matcher;
 		String protoId;
@@ -56,11 +69,11 @@ public class BibConvert
 		int countCites =0;
 		int countHandled=0;
 		int countPartial=0;
-		String[] forMiscId;
 		//go through the text file
 		while(fromTextFile.hasNext())
 		{
 			hold = fromTextFile.nextLine();
+			hold = hold.trim(); //leading and trailing whitespace
 			countCites++;
 			
 			if(hold.contains("@@@")) //currently using @@@ to split off stuff like 'example adapted from' that I'm currently ignoring
@@ -185,6 +198,71 @@ public class BibConvert
 				continue;
 			}
 			
+			//partial processing
+				//note that all of these will only grab the first instance of the looked for pattern, but this is desired since there can only be one instance of each tag
+			hold2 = hold; //need it in a different string since I might modify it
+			if(hold2.matches(regExForLineMatch(regExTitleForPartial)))//matches matches against the whole line, so the linematch function handles that
+			{
+				pattern = Pattern.compile(regExForLineMatch(regExTitleForPartial));
+				matcher = pattern.matcher(hold2);
+				matcher.matches();
+				
+				hold2 = matcher.group("pre")+matcher.group("post"); //take out the target, turn the rest back into a string
+				partialInProgress = partialInProgress+"\t\t\t\t<bib:title>"+xmlifyContent(matcher.group("title"))+"</bib:title>\n";
+			}
+			if(hold2.matches(regExForLineMatch(regExURLForPartial)))//matches matches against the whole line, so the linematch function handles that
+			{
+				pattern = Pattern.compile(regExForLineMatch(regExURLForPartial));
+				matcher = pattern.matcher(hold2);
+				matcher.matches();
+				
+				hold2 = matcher.group("pre")+matcher.group("post"); //take out the target, turn the rest back into a string
+				partialInProgress = partialInProgress+"\t\t\t\t<bib:howpublished>"+xmlifyContent(matcher.group("url"))+"</bib:howpublished>\n"; //putting url in howpublished since note will be occupied
+			}
+				//split is because I don't want this to grab retrieved-on dates
+				//I need to print month first because xml rules, but grab year first because otherwise month can overmatch something like March 2012
+			if(hold2.split("[Rr]etrieved on")[0].matches(regExForLineMatch(regExYearForPartial)))//matches matches against the whole line, so the linematch function handles that
+			{
+				pattern = Pattern.compile(regExForLineMatch(regExYearForPartial));
+				matcher = pattern.matcher(hold2);
+				matcher.matches();
+				
+				hold2 = matcher.group("pre")+matcher.group("post"); //take out the target, turn the rest back into a string
+				temp = "\t\t\t\t<bib:year>"+xmlifyContent(matcher.group("year"))+"</bib:year>\n";
+			}
+			if(hold2.split("[Rr]etrieved on")[0].matches(regExForLineMatch(regExMonthForPartial)))//matches matches against the whole line, so the linematch function handles that
+			{
+				pattern = Pattern.compile(regExForLineMatch(regExMonthForPartial));
+				matcher = pattern.matcher(hold2);
+				matcher.matches();
+				
+				hold2 = matcher.group("pre")+matcher.group("post"); //take out the target, turn the rest back into a string
+				partialInProgress = partialInProgress+"\t\t\t\t<bib:month>"+xmlifyContent(matcher.group("month"))+"</bib:month>\n";
+				
+				partialInProgress = partialInProgress+temp; //if there was not year temp is just empty string
+				temp=""; //reset it
+			}
+			if(!hold2.equals(hold)) //so, some partial processing was done
+			{
+				countPartial++;
+				
+				partialInProgress = partialInProgress+"\t\t\t\t<bib:note>"+xmlifyContent(hold2)+"</bib:note>\n";
+				
+				protoId = forMiscProtoId(hold2);
+				id = makeEntryId(protoId, authorsForId);
+				
+				//these are written into a string to be put in the file all together later
+				partialProcessing = partialProcessing +"\t\t<bib:entry id=\""+id+"\">\n";
+				partialProcessing = partialProcessing +"\t\t\t<bib:misc>\n";
+				partialProcessing = partialProcessing + partialInProgress;
+				partialProcessing = partialProcessing +"\t\t\t</bib:misc>\n";
+				partialProcessing = partialProcessing +"\t\t</bib:entry>\n";
+				
+				partialInProgress = ""; //clear it for next time
+				
+				continue;
+			}
+			
 			notHandled.add(hold);
 			System.out.println(hold);
 		}
@@ -193,26 +271,13 @@ public class BibConvert
 		
 		toXMLFile.println(authorYearTitleHow);
 		
+		toXMLFile.println(partialProcessing);
+		
 		//put anything not handled in a misc entry as a note
 		for(int i=0; i<notHandled.size(); i++)
 		{
-			forMiscId = notHandled.get(i).split("[\\.\\,;:\\?…\\s]+");
-			
-			//if the first two 'words' for start with a capital letter (so, possibly the author), use them as the proto id
-			//otherwise, use the first non-beginning word that does start with one
-			//otherwise use the last word
-			protoId = forMiscId[forMiscId.length-1];
-			if(forMiscId[0].substring(0,1).matches("[A-Z]") && forMiscId.length>1 && forMiscId[1].substring(0,1).matches("[A-Z]"))
-				protoId = forMiscId[0] + forMiscId[1];
-			else
-				for(int j=1; j<forMiscId.length; j++) //the first word often just starts with a capital letter even if not important, so unless it met the prior condition, we skip that one
-				{
-					if(forMiscId[j].substring(0,1).matches("[A-Z]"))
-					{
-						protoId = forMiscId[j];
-						break;
-					}
-				}	
+			protoId = forMiscProtoId(notHandled.get(i));
+				
 			id = makeEntryId(protoId, authorsForId);
 			
 			toXMLFile.println("\t\t<bib:entry id=\""+id+"\">");
@@ -272,5 +337,54 @@ public class BibConvert
 			authorsForId.put(protoId, 1); 
 			return protoId + "_1";
 		}
+	}
+	
+	public static String forMiscProtoId(String line)
+	{
+		String[] forMiscId = line.split("[\\.\\,;:\\?…\\s]+");
+		//it looks like if one of the things to split at is first the first array element might be empty string. So, move them all down one
+		while(forMiscId[0].equals(""))
+		{
+			for(int i=0; i<forMiscId.length-1; i++)
+			{
+				forMiscId[i] = forMiscId[i+1];
+			}
+			forMiscId = Arrays.copyOf(forMiscId, forMiscId.length-1);
+		}
+		String protoId;
+			
+		//if the first two 'words' for start with a capital letter (so, possibly the author), use them as the proto id
+		//otherwise, use the first non-beginning word that does start with one
+		//otherwise use the last word
+		protoId = forMiscId[forMiscId.length-1];
+		if(forMiscId[0].substring(0,1).matches("[A-Z]") && forMiscId.length>1 && forMiscId[1].substring(0,1).matches("[A-Z]"))
+			protoId = forMiscId[0] + forMiscId[1];
+		else
+			for(int j=1; j<forMiscId.length; j++) //the first word often just starts with a capital letter even if not important, so unless it met the prior condition, we skip that one
+			{
+				if(forMiscId[j].substring(0,1).matches("[A-Z]"))
+				{
+					protoId = forMiscId[j];
+					break;
+				}
+			}
+		
+		return protoId;	
+	}
+	
+	public static String restringArray(String[] arrayToRestring)
+	{
+		String toReturn = "";
+		for(int i = 0; i<arrayToRestring.length; i++)
+		{
+			toReturn = toReturn+arrayToRestring[i];
+		}
+		
+		return toReturn;
+	}
+	
+	public static String regExForLineMatch(String regex)
+	{
+		return regExBeginningForPartial+regex+regExEndForPartial;
 	}
 }
