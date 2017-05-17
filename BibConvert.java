@@ -1,6 +1,7 @@
 //args 0 is the input file name
 
 //@@@ in text file sets off things at beginning of citations to be ignored (like 'Source: ')
+//some info on the bib xml format: http://cnx.org/contents/LFmTVwBw@8/CNXML-Reference-Extensions
 
 import java.io.*;
 import java.util.Scanner;
