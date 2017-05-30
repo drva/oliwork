@@ -5,6 +5,8 @@
 //args 4 is the folder the papers are in
 //system.out outputs the org file text
 
+//running example: java OutlineConvert outline workbookpages quizconversion "Content/Slides" "Content/Papers"
+
 import java.io.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
