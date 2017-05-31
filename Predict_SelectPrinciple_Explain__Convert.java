@@ -19,6 +19,8 @@ public class Predict_SelectPrinciple_Explain__Convert
 	public static boolean flagOpenBody=false;
 	public static boolean flagOpenChoices=false;
 	
+	public static String correctAnswer=""; //is up here so it can be reset from methods
+	
 	public static void main(String[] args) throws IOException
 	{
 		Scanner fromTextFile = new Scanner(new File(args[0]+".txt"));
@@ -34,6 +36,7 @@ public class Predict_SelectPrinciple_Explain__Convert
  		
 		String hold="";
 		String choiceId="";
+		boolean isCorrectAnswer=false;
 		//go through the text file
 		while(fromTextFile.hasNext())
 		{
@@ -77,7 +80,7 @@ public class Predict_SelectPrinciple_Explain__Convert
  				continue;
  			}
  			
- 			//choices are currently unmarked so they are 'anything else' (except blank lines)
+ 			//choices are currently unmarked, so they are 'anything else' (except blank lines)
  			if(!hold.equals(""))
  			{
  				if(flagOpenBody)
@@ -85,10 +88,23 @@ public class Predict_SelectPrinciple_Explain__Convert
  				if(!flagOpenChoices)
  					openChoices(toXMLFile);
  				
+ 				//identify the correct answer (which is marked by *)
+ 				if(hold.charAt(0)=='*')
+ 				{
+ 					isCorrectAnswer=true;
+ 					hold = hold.substring(1, hold.length()); //now trim the * off
+ 				}
+ 				
  				//create id out of the choice
  				choiceId=xmlifyTitleId(hold.substring(0, Math.min(maxIdLength, hold.length())).toLowerCase().replaceAll("\\s+","_"));
  				
  				toXMLFile.println("\t\t\t\t<choice value=\""+choiceId+"\">"+xmlifyContent(hold)+"</choice>");
+ 				
+ 				if(isCorrectAnswer)
+ 				{
+ 					correctAnswer = choiceId;
+ 					isCorrectAnswer=false;
+ 				}
  			}	
 		}
 		
@@ -172,14 +188,15 @@ public class Predict_SelectPrinciple_Explain__Convert
 		toXMLFile.println("\t\t\t</multiple_choice>");
 		flagOpenChoices = false;
 		
-		toXMLFile.println("\t\t\t<part>\n"+
-            /*<response  match="c" score="1">              
-                   <feedback>
-                   <image src="../webcontent/images/mauve.jpg" width="293"/>
-                       Correct - Mauve is not a prime color.
-                   </feedback>
-            </response>*/
-            			"\t\t\t\t<response match=\"*\" score=\"0\">\n"+
+		toXMLFile.println("\t\t\t<part>");
+		if(!correctAnswer.equals("")) //"" happens when no correct answer was given
+		{
+			toXMLFile.println("\t\t\t\t<response match=\""+correctAnswer+"\" score=\""+Integer.toString(pointsPerQ)+"\">\n"+
+                			"\t\t\t\t\t<feedback>Correct!</feedback>\n"+
+           					"\t\t\t\t</response>");
+           	correctAnswer=""; //once it's used reset it so it doesn't end up carrying over to the next one if the next one has none given
+        }
+        toXMLFile.println("\t\t\t\t<response match=\"*\" score=\"0\">\n"+
                 		"\t\t\t\t\t<feedback>Incorrect.</feedback>\n"+
            				"\t\t\t\t</response>\n"+
         				"\t\t\t</part>");
