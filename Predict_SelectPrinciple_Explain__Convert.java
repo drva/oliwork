@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 public class Predict_SelectPrinciple_Explain__Convert
 {
 	public static String idBase = "predict_selectprinciple_explain";
+	public static String imageFolder = "images";
 	public static String shuffle = "false";
 	public static int pointsPerQ = 1;
 	public static int maxIdLength = 50; //currently decided at random
@@ -52,7 +53,7 @@ public class Predict_SelectPrinciple_Explain__Convert
 				
 				if(flagOpenSection)
 					closeSection(toXMLFile);
-				openSection(toXMLFile, xmlifyContent(matcher.group("settitle")), "sec"+matcher.group("setnum"));
+				openSection(toXMLFile, xmlifyContent(matcher.group("settitle")), matcher.group("setnum"));
 				
 				continue;
  			}
@@ -75,7 +76,7 @@ public class Predict_SelectPrinciple_Explain__Convert
  			//question body continuation on another line
  			if(hold.matches(regExBodyCont))
  			{
- 				toXMLFile.println("\t\t\t\t"+xmlifyContent(hold));
+ 				toXMLFile.println("\t\t\t\t<p>"+xmlifyContent(hold)+"</p>");
  				
  				continue;
  			}
@@ -137,8 +138,14 @@ public class Predict_SelectPrinciple_Explain__Convert
 	public static void openSection(PrintWriter toXMLFile, String title, String id) throws IOException
 	{
 		flagOpenSection = true;
-		toXMLFile.println("\t<section id=\""+id+"\">");
-		toXMLFile.println("\t\t<title>"+title+"</title>");
+		toXMLFile.println("\t\t<content><p>"+title+"</p></content>");
+		
+		//adds in images for the section, assuming they go directly after the section opener and are saved in the format iSECTIONNUM
+		File image = new File(imageFolder+"/i"+id+".png");
+ 		if(image.exists())
+ 		{
+ 			toXMLFile.println("\t\t<content><image src=\"../webcontent/"+"i"+id+".png\"/></content>");
+ 		}
 	}
 	
 	public static void closeSection(PrintWriter toXMLFile) throws IOException
@@ -146,7 +153,6 @@ public class Predict_SelectPrinciple_Explain__Convert
 		if(flagOpenQuestion)
 			closeQuestion(toXMLFile);
 		flagOpenSection = false;
-		toXMLFile.println("\t</section>");
 	}
 	
 	public static void openQuestion(PrintWriter toXMLFile, String id, String bodyContent) throws IOException
@@ -156,7 +162,7 @@ public class Predict_SelectPrinciple_Explain__Convert
 		
 		toXMLFile.println("\t\t<question id=\""+id+"\">");
 		toXMLFile.println("\t\t\t<body>");
-		toXMLFile.println("\t\t\t\t"+bodyContent);
+		toXMLFile.println("\t\t\t\t<p>"+bodyContent+"</p>");
 	}
 	
 	//also calls close choices
