@@ -9,11 +9,15 @@ import java.util.regex.Matcher;
 public class Predict_SelectPrinciple_Explain__Convert
 {
 	public static String idBase = "predict_selectprinciple_explain";
+	public static String shuffle = "false";
+	public static int pointsPerQ = 1;
+	public static int maxIdLength = 50; //currently decided at random
 	
 	//flags for open tags
 	public static boolean flagOpenSection=false;
 	public static boolean flagOpenQuestion=false;
 	public static boolean flagOpenBody=false;
+	public static boolean flagOpenChoices=false;
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -29,6 +33,7 @@ public class Predict_SelectPrinciple_Explain__Convert
  		Matcher matcher;
  		
 		String hold="";
+		String choiceId="";
 		//go through the text file
 		while(fromTextFile.hasNext())
 		{
@@ -68,14 +73,33 @@ public class Predict_SelectPrinciple_Explain__Convert
  			if(hold.matches(regExBodyCont))
  			{
  				toXMLFile.println("\t\t\t\t"+xmlifyContent(hold));
+ 				
+ 				continue;
  			}
  			
- 			
+ 			//choices are currently unmarked so they are 'anything else' (except blank lines)
+ 			if(!hold.equals(""))
+ 			{
+ 				if(flagOpenBody)
+ 					closeBody(toXMLFile);
+ 				if(!flagOpenChoices)
+ 					openChoices(toXMLFile);
+ 				
+ 				//create id out of the choice
+ 				choiceId=xmlifyTitleId(hold.substring(0, Math.min(maxIdLength, hold.length())).toLowerCase().replaceAll("\\s+","_"));
+ 				
+ 				toXMLFile.println("\t\t\t\t<choice value=\""+choiceId+"\">"+xmlifyContent(hold)+"</choice>");
+ 			}	
 		}
 		
+		if(flagOpenQuestion)
+			closeQuestion(toXMLFile);
+			
 		if(flagOpenSection)
 			closeSection(toXMLFile);
+			
 		closeFormativeAssessment(toXMLFile);
+		
 		toXMLFile.close();		
 	}
 	
@@ -103,6 +127,8 @@ public class Predict_SelectPrinciple_Explain__Convert
 	
 	public static void closeSection(PrintWriter toXMLFile) throws IOException
 	{
+		if(flagOpenQuestion)
+			closeQuestion(toXMLFile);
 		flagOpenSection = false;
 		toXMLFile.println("\t</section>");
 	}
@@ -117,10 +143,59 @@ public class Predict_SelectPrinciple_Explain__Convert
 		toXMLFile.println("\t\t\t\t"+bodyContent);
 	}
 	
+	//also calls close choices
 	public static void closeQuestion(PrintWriter toXMLFile) throws IOException
 	{
-		flagOpenQuestion = false;
+		closeChoices(toXMLFile);
+		
 		toXMLFile.println("\t\t</question>");
+		flagOpenQuestion = false;
+	}
+	
+	//body gets openeded within openQuestion, and so doesn't have its own method
+	public static void closeBody(PrintWriter toXMLFile) throws IOException
+	{
+		flagOpenBody = false;
+		toXMLFile.println("\t\t\t</body>");
+	}
+	
+	public static void openChoices(PrintWriter toXMLFile) throws IOException
+	{
+		flagOpenChoices = true;
+		
+		toXMLFile.println("\t\t\t<multiple_choice select=\"single\" shuffle=\""+shuffle+"\">");
+	}
+	
+	//also handles 'part'/responses etc
+	public static void closeChoices(PrintWriter toXMLFile) throws IOException
+	{
+		toXMLFile.println("\t\t\t</multiple_choice>");
+		flagOpenChoices = false;
+		
+		toXMLFile.println("\t\t\t<part>\n"+
+            /*<response  match="c" score="1">              
+                   <feedback>
+                   <image src="../webcontent/images/mauve.jpg" width="293"/>
+                       Correct - Mauve is not a prime color.
+                   </feedback>
+            </response>*/
+            			"\t\t\t\t<response match=\"*\" score=\"0\">\n"+
+                		"\t\t\t\t\t<feedback>Incorrect.</feedback>\n"+
+           				"\t\t\t\t</response>\n"+
+        				"\t\t\t</part>");
+
+	}
+	
+	public static String xmlifyTitleId(String fixCharacters) //from OutlineConvert
+	{
+		//xml characters
+ 		fixCharacters = fixCharacters.replaceAll("&", "and"); 
+ 		fixCharacters = fixCharacters.replaceAll("<", "");
+ 		fixCharacters = fixCharacters.replaceAll(">", "");
+ 		fixCharacters = fixCharacters.replaceAll("'", "");
+ 		fixCharacters = fixCharacters.replaceAll("\"", "");
+ 		
+ 		return fixCharacters;
 	}
 	
 	public static String xmlifyContent(String fixCharacters) //from OutlineConvert
