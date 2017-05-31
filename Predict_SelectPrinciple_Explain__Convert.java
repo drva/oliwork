@@ -58,13 +58,16 @@ public class Predict_SelectPrinciple_Explain__Convert
 			pagesMappingPW = new HashMap<Integer, PrintWriter>();
 			String regExMapLine = "(?<title>[\\s\\S]+?)\\s*\\((?<num1>\\d+)(&(?<num2>\\d+))?\\)";
 			String[] holdArray = null; 
+			PrintWriter holdPW = null;
 			//process the directory
 			Scanner fromMapping = new Scanner(new File(args[1]+".txt"));
 			while(fromMapping.hasNext())
 			{
 				hold = fromMapping.nextLine().trim(); //leading and trailing whitespace
 				if(!hold.matches(regExMapLine)) //skip non-matching lines
+				{
 					continue;
+				}	
 					 
 				pattern = Pattern.compile(regExMapLine);
 				matcher = pattern.matcher(hold);
@@ -96,8 +99,9 @@ public class Predict_SelectPrinciple_Explain__Convert
 					holdArray[1] = ncName(matcher.group("title").toLowerCase().replaceAll("\\s+", "_").replaceAll("\\.", ""));
 					//the third thing will be the flag
 					//the printwriter goes in its own hashmap since it's not a string
-					pagesMappingPW.put(Integer.parseInt(matcher.group("num1")), new PrintWriter(idBase+holdArray[1]+".xml"));
-					pagesMappingPW.put(Integer.parseInt(matcher.group("num2")), new PrintWriter(idBase+holdArray[1]+".xml"));
+					holdPW = new PrintWriter(idBase+holdArray[1]+".xml");
+					pagesMappingPW.put(Integer.parseInt(matcher.group("num1")), holdPW);
+					pagesMappingPW.put(Integer.parseInt(matcher.group("num2")), holdPW);
 				}
 				//regardless, begin each xml file
 				toXMLFile = pagesMappingPW.get(Integer.parseInt(matcher.group("num1"))); //it's fine to just use num1 since it there's a num2 it's the same printwriter
@@ -166,7 +170,7 @@ public class Predict_SelectPrinciple_Explain__Convert
  				if(hold.charAt(0)=='*')
  				{
  					isCorrectAnswer=true;
- 					hold = hold.substring(1, hold.length()); //now trim the * off
+ 					//hold = hold.substring(1, hold.length()); //now trim the * off
  				}
  				
  				//create id out of the choice
