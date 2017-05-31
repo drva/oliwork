@@ -5,6 +5,9 @@ import java.io.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.awt.Image;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 
 public class Predict_SelectPrinciple_Explain__Convert
 {
@@ -138,13 +141,18 @@ public class Predict_SelectPrinciple_Explain__Convert
 	public static void openSection(PrintWriter toXMLFile, String title, String id) throws IOException
 	{
 		flagOpenSection = true;
-		toXMLFile.println("\t\t<content><p>"+title+"</p></content>");
+		toXMLFile.println("\t\t<content><p><em style=\"bold\">"+title+"</em></p></content>");
 		
 		//adds in images for the section, assuming they go directly after the section opener and are saved in the format iSECTIONNUM
 		File image = new File(imageFolder+"/i"+id+".png");
+		
+		//trying to get the width to work right - images should be made *smaller* if needed but not *bigger*
+		//https://stackoverflow.com/questions/672916/how-to-get-image-height-and-width-using-java
+		BufferedImage bimg = ImageIO.read(image);
+		int width = bimg.getWidth();
  		if(image.exists())
  		{
- 			toXMLFile.println("\t\t<content><image src=\"../webcontent/"+"i"+id+".png\"/></content>");
+ 			toXMLFile.println("\t\t<content><image src=\"../webcontent/"+"i"+id+".png\" width=\""+Integer.toString(Math.min(width, 650))+"\"/></content>");
  		}
 	}
 	
