@@ -17,7 +17,7 @@ public class OutlineConvert
 	public static String regExUnit = "Unit \\d+:: ([\\s\\S]+?)\\s*";
 	public static String regExModule = "Module \\d+/ ([\\s\\S]+?)\\s*";
 	public static String regExQuiz = "([\\s\\S]+?) quiz[\\s]*";
-	public static String regExSlides = "([\\s\\S]+? slides) \\[([\\s\\S]+?)\\]";
+	public static String regExSlides = "([\\s\\S]+? slides) \\[([\\s\\S]+?)\\](~(?<iframe>[\\s\\S]+))?";
 	public static String regExPapers = "([\\s\\S]+?): ([\\s\\S]+?) \\[([\\s\\S]+?)…?\\]";
 	public static String regExPapers2 = "([\\s\\S]+? paper) \\[([\\s\\S]+?)…?\\]"; //for the optional reading
 	public static String regExLinks = "([\\s\\S]+?: )?([\\s\\S]+?) \\[link attached\\]<([\\s\\S]+?)>([\\s\\S]*)";
@@ -123,8 +123,8 @@ public class OutlineConvert
 				toCourseFile = new PrintWriter(args[1]+"/"+id+".xml");
 			
 				toCourseFile.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
-								"<!DOCTYPE workbook_page PUBLIC \"-//Carnegie Mellon University//DTD Workbook Page 3.7//EN\" \"http://oli.web.cmu.edu/dtd/oli_workbook_page_3_7.dtd\">\n"+
-								"<?xml-stylesheet type=\"text/css\" href=\"http://oli.web.cmu.edu/authoring/oxy-author/oli_workbook_page_3_7.css\"?>\n"+
+								"<!DOCTYPE workbook_page PUBLIC \"-//Carnegie Mellon University//DTD Workbook Page 3.8//EN\" \"http://oli.web.cmu.edu/dtd/oli_workbook_page_3_8.dtd\">\n"+
+								"<?xml-stylesheet type=\"text/css\" href=\"http://oli.web.cmu.edu/authoring/oxy-author/oli_workbook_page_3_8.css\"?>\n"+
 								"<workbook_page id=\""+id+"\">\n"+
 								"\t<head>\n"+
 								"\t\t<title>"+title+"</title>\n"+
@@ -173,6 +173,9 @@ public class OutlineConvert
 					if(checkAs.equals(dirSlides[i].getName()) || checkAs.equals(dirSlides[i].getName().split(".pptx")[0])|| checkAs.equals(dirSlides[i].getName().split("-")[0]))
 					{
 						toCourseFile.println("\t\t<p><link href=\"../webcontent/slides/"+dirSlides[i].getName()+"\">"+xmlifyContent(matcher.group(1))+"</link></p>");
+						if(matcher.group("iframe")!=null)
+							toCourseFile.println("\t\t"+matcher.group("iframe").replaceAll("&", "&amp;").replaceAll("frameborder=\"\\S+\"|allowfullscreen=\"\\S+\"|mozallowfullscreen=\"\\S+\"|webkitallowfullscreen=\"\\S+\"", "").replaceAll("width=\"\\S+\"","width=\"800\"").replaceAll("height=\"\\S+\"","height=\"474\"")); 
+						//^second replaceAll is for things the schema doesn't like in iframes, third and fourth is adjusting width and height
 					}
 				}
 				continue;
