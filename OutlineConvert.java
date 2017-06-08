@@ -3,6 +3,7 @@
 //args 2 is the folder the quizzes are in
 //args 3 is the folder the slides are in
 //args 4 is the folder the papers are in
+//args 5 causes the system.out output to happen if it exists
 //system.out outputs the org file text
 
 //running example: java OutlineConvert outline workbookpages quizconversion "Content/Slides" "Content/Papers"
@@ -14,6 +15,8 @@ import java.util.regex.Matcher;
 
 public class OutlineConvert
 {
+	public static boolean printOrg = false;
+	
 	public static String regExUnit = "Unit \\d+:: ([\\s\\S]+?)\\s*";
 	public static String regExModule = "Module \\d+/ ([\\s\\S]+?)\\s*";
 	public static String regExQuiz = "([\\s\\S]+?) quiz[\\s]*";
@@ -24,6 +27,9 @@ public class OutlineConvert
 	
 	public static void main(String[] args) throws IOException
 	{
+		if(args.length > 5)
+			printOrg = true;
+		
 		Scanner fromTextFile = new Scanner(new File(args[0]+".txt"));
 		
 		//flags for open tags
@@ -78,8 +84,11 @@ public class OutlineConvert
 				title=matcher.group(1);
 				id = ncName(matcher.group(1).replaceAll("\\s","_"));
 				
-				//System.out.println("\t\t\t<unit id=\""+id+"\">");
-				//System.out.println("\t\t\t\t<title>"+title+"</title>");
+				if(printOrg)
+				{
+					System.out.println("\t\t\t<unit id=\""+id+"\">");
+					System.out.println("\t\t\t\t<title>"+title+"</title>");
+				}
 				openUnit = true;
 				continue;
 			}
@@ -109,15 +118,19 @@ public class OutlineConvert
 				if(id.length()>56) //I'm having an error and wondering if it's due to length
 					id=id.substring(0,57);
 				
-				//System.out.println("\t\t\t\t<module id=\""+id+"\">");
-				//System.out.println("\t\t\t\t\t<title>"+title+"</title>");
+				if(printOrg)
+				{
+					System.out.println("\t\t\t\t<module id=\""+id+"\">");
+					System.out.println("\t\t\t\t\t<title>"+title+"</title>");
+				}
 				openModule = true;
 				
 				//page
 				//the org file text
-				/*System.out.println("\t\t\t\t<item>\n"+
+				if(printOrg)
+					System.out.println("\t\t\t\t<item>\n"+
 									"\t\t\t\t\t<resourceref idref=\""+id+"\"/>\n"+
-									"\t\t\t\t</item>");*/
+									"\t\t\t\t</item>");
 									
 				//the workbook page
 				toCourseFile = new PrintWriter(args[1]+"/"+id+".xml");
@@ -309,11 +322,13 @@ public class OutlineConvert
 	
 	public static void closeModule()
 	{
-		//System.out.println("\t\t\t\t</module>");
+		if(printOrg)
+			System.out.println("\t\t\t\t</module>");
 	}
 	
 	public static void closeUnit()
 	{
-		//System.out.println("\t\t\t</unit>");
+		if(printOrg)
+			System.out.println("\t\t\t</unit>");
 	}
 }
