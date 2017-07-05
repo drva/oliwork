@@ -9,7 +9,8 @@
 //^^^content^^^ is superscript
 
 //images that are anything other than 'there is one image and it is the last thing in body' need to be preprocessed in the text file
-//format example: INSERTIMAGE: image5.05a CAPTION: SCREEN A where caption is optional
+//format example: INSERTIMAGE: image5.05a.png CAPTION: SCREEN A where caption is optional
+//^edit: images should now include the file extension to allow different ones
 
 import java.io.*;
 import java.util.Scanner;
@@ -99,7 +100,7 @@ public class QuizConvert
  		String questionId="";
  		
  		String hold="";
- 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([a-zA-Z0-9\\.]+)\\s*"); //first whitespace has + incase of typos
+ 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([a-zA-Z0-9_\\.]+)\\s*"); //first whitespace has + incase of typos
  		Pattern answerIncorrect = Pattern.compile("([a-z])\\.\\s*([\\s\\S]+)"); //whitespace has a * in case of typos
  		Pattern answerCorrect = Pattern.compile("\\*([a-z])\\.\\s*([\\s\\S]+)");
  		Pattern body = Pattern.compile("\\S+[\\s\\S]*"); //will cause an issue if a body line starts with whitespace...
@@ -121,7 +122,7 @@ public class QuizConvert
  			matcher=prepImageAndCap.matcher(hold);
  			if(matcher.matches())
  			{
- 				toXMLFile.println("\t\t\t<image src=\"../webcontent/"+matcher.group(1)+".png\">");
+ 				toXMLFile.println("\t\t\t<image src=\"../webcontent/"+matcher.group(1)+"\">");
  				toXMLFile.println("\t\t\t\t<caption>"+matcher.group(2)+"</caption>");
  				toXMLFile.println("\t\t\t</image>");
  				continue;
@@ -129,7 +130,7 @@ public class QuizConvert
  			matcher=prepImage.matcher(hold);
  			if(matcher.matches())
  			{
- 				toXMLFile.println("\t\t\t<image src=\"../webcontent/"+matcher.group(1)+".png\"/>");
+ 				toXMLFile.println("\t\t\t<image src=\"../webcontent/"+matcher.group(1)+"\"/>");
  				continue;
  			}
  			
