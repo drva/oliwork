@@ -100,7 +100,7 @@ public class QuizConvert
  		String questionId="";
  		
  		String hold="";
- 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([a-zA-Z0-9_\\.]+)\\s*"); //first whitespace has + incase of typos
+ 		Pattern idLine = Pattern.compile("[0-9]+\\.\\s+([a-zA-Z0-9_\\-\\.]+)\\s*"); //first whitespace has + incase of typos
  		Pattern answerIncorrect = Pattern.compile("([a-z])\\.\\s*([\\s\\S]+)"); //whitespace has a * in case of typos
  		Pattern answerCorrect = Pattern.compile("\\*([a-z])\\.\\s*([\\s\\S]+)");
  		Pattern body = Pattern.compile("\\S+[\\s\\S]*"); //will cause an issue if a body line starts with whitespace...
