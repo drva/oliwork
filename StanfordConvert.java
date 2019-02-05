@@ -25,11 +25,17 @@ public class StanfordConvert
 	{
 		directoryPrefix = args[0];
 		
-		toAFile = new PrintWriter(new File("content.txt")); //I want to stick all the course content in a file together (in order) so I can look at it/go through it easier
+		toAFile = new PrintWriter(new File("content.html")); //I want to stick all the course content in a file together (in order) so I can look at it/go through it easier
+		//since content appears to be basically in html, doing an html file rn so I can copy it in
+		toAFile.println("<html>\n"+
+						"<head><title>content</title></head>\n"+
+						"<body>");
 		
 		//at the moment this is taking in a *unit* ('chapter') and going from there
 		chapter(directoryPrefix+"/"+args[1]);
 		
+		toAFile.println("</body>\n"+
+						"</html>");
 		toAFile.close();
 	}
 	
@@ -57,7 +63,7 @@ public class StanfordConvert
 				//is there a way to do in java the thing I just learned in Python where you use (in python) a multiplication sign to print the same thing multiple times? That would be good for the tabs, so I could have a number input and have it tab that many. Better for 'and the next layer gets one more' and for synchronizing to end tags and in general less hardcoded.
 				System.out.println("\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
 									"\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
-				toAFile.println(oliName+": " + matcher.group("name"));
+				toAFile.println("<h1><b>"+oliName+": " + matcher.group("name")+"</b></h1>");
 				continue;
 			}
 			
@@ -80,7 +86,8 @@ public class StanfordConvert
 			}
 			
 			//anything else
-			toAFile.println("!!!"+thisOne+": "+hold);
+			toAFile.println("<textarea cols=\"100\">!!!"+thisOne+": "+hold+"</textarea>"); 
+			//for these looked through list of html tags tried ins which is inserted which like not quite it but. But that got rid of the stuff after !!!vertical, which I figured out by looking at the source of it was because there's tags like <problem> and stuff. Tried pre but it still did that. (Did know I could also fix it by replace and all). But I'd been going to use pre for when I copied those files in, thinking it might show the tags fine, and looks like not and I want them and don't really want to conver to &lg and all. So then I thought of text area, and, works, yay!
 			
 		}
 		System.out.println("\t</"+oliName+">");
@@ -112,7 +119,7 @@ public class StanfordConvert
 				System.out.println("\t\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
 									"\t\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
 			
-				toAFile.println(oliName+": " + matcher.group("name"));
+				toAFile.println("<h1>"+oliName+": " + matcher.group("name")+"</h1>");
 				continue;
 			}
 			
@@ -135,7 +142,7 @@ public class StanfordConvert
 			}
 			
 			//anything else
-			toAFile.println("!!!"+thisOne+": "+hold);
+			toAFile.println("<textarea cols=\"100\">!!!"+thisOne+": "+hold+"</textarea>");
 			
 		}
 		System.out.println("\t\t</"+oliName+">");
@@ -167,7 +174,7 @@ public class StanfordConvert
 				System.out.println("\t\t\t<item>\n"+
 									"\t\t\t\t<resourceref idref=\""+makeId(matcher.group("name"))+"\"/>\n"+
 									"\t\t\t</item>");
-				toAFile.println(oliName+": " + matcher.group("name"));
+				toAFile.println("<hr/>\n<h1><i>"+oliName+": " + matcher.group("name")+"</i></h1>");
 				continue;
 			}
 			
@@ -190,7 +197,7 @@ public class StanfordConvert
 			}
 			
 			//anything else
-			toAFile.println("!!!"+thisOne+": "+hold);
+			toAFile.println("<textarea cols=\"100\">!!!"+thisOne+": "+hold+"</textarea>"); 
 		}
 		
 		fromTextFile.close();
