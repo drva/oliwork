@@ -185,7 +185,7 @@ public class StanfordConvert
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				html(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId")+".xml");
+				html(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId"));
 			
 				continue;
 			}
@@ -205,7 +205,29 @@ public class StanfordConvert
 	
 	public static void html(String filename) throws IOException
 	{
-		toAFile.println(filename);
+		String xmlfile = filename+".xml";
+		String htmlfile = filename+".html";
+		
+		Scanner fromHTML = new Scanner(new File(htmlfile));
+		Scanner fromXML = new Scanner(new File(xmlfile));
+		
+		//copy the xml files into our file, within pre tags, so I can check their contents. Fix the <>'s so it goes through alright
+		toAFile.println("<pre>");
+		while(fromXML.hasNext())
+		{
+			toAFile.println(fromXML.nextLine().replaceAll("<", "&lt;").replaceAll(">","&gt;"));
+		}
+		toAFile.println("</pre>");
+		
+		fromXML.close();
+		
+		//copy the html files into our file
+		while(fromHTML.hasNext())
+		{
+			toAFile.println(fromHTML.nextLine());
+		}
+		
+		fromHTML.close();
 	}
 	
 	public static String makeId(String fixCharacters)
