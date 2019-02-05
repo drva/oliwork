@@ -18,10 +18,14 @@ public class StanfordConvert
 	//by having begin and end I can use the same regexs for all the file types
 	public static String regexLinkBegin = "<";
 	public static String regexLinkEnd = " url_name=\"(?<fileId>[0-9a-z]+)\"/>";
+	
+	public static PrintWriter toAFile;
 
 	public static void main(String[] args) throws IOException
 	{
 		directoryPrefix = args[0];
+		
+		toAFile = new PrintWriter(new File("content.txt")); //I want to stick all the course content in a file together (in order) so I can look at it/go through it easier
 		
 		//at the moment this is taking in a *unit* ('chapter') and going from there
 		chapter(directoryPrefix+"/"+args[1]);
@@ -48,8 +52,8 @@ public class StanfordConvert
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				System.out.println("<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
-									"\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
+				System.out.println("\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
+									"\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
 				continue;
 			}
 			
@@ -75,7 +79,7 @@ public class StanfordConvert
 			System.out.println("!!!"+thisOne+": "+hold);
 			
 		}
-		System.out.println("</"+oliName+">");
+		System.out.println("\t</"+oliName+">");
 		
 		fromTextFile.close();
 	}
@@ -101,8 +105,8 @@ public class StanfordConvert
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				System.out.println("<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
-									"\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
+				System.out.println("\t\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
+									"\t\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
 			
 				continue;
 			}
@@ -129,7 +133,7 @@ public class StanfordConvert
 			System.out.println("!!!"+thisOne+": "+hold);
 			
 		}
-		System.out.println("</"+oliName+">");
+		System.out.println("\t\t</"+oliName+">");
 		
 		fromTextFile.close();
 	}
@@ -155,9 +159,9 @@ public class StanfordConvert
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				System.out.println("<item>\n"+
-									"<resourceref idref=\""+makeId(matcher.group("name"))+"\"/>\n"+
-									"</item>");
+				System.out.println("\t\t\t<item>\n"+
+									"\t\t\t\t<resourceref idref=\""+makeId(matcher.group("name"))+"\"/>\n"+
+									"\t\t\t</item>");
 				continue;
 			}
 			
