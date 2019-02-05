@@ -29,6 +29,8 @@ public class StanfordConvert
 		
 		//at the moment this is taking in a *unit* ('chapter') and going from there
 		chapter(directoryPrefix+"/"+args[1]);
+		
+		toAFile.close();
 	}
 	
 	//chapters are units
@@ -52,8 +54,10 @@ public class StanfordConvert
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
+				//is there a way to do in java the thing I just learned in Python where you use (in python) a multiplication sign to print the same thing multiple times? That would be good for the tabs, so I could have a number input and have it tab that many. Better for 'and the next layer gets one more' and for synchronizing to end tags and in general less hardcoded.
 				System.out.println("\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
 									"\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
+				toAFile.println(oliName+": " + matcher.group("name"));
 				continue;
 			}
 			
@@ -76,7 +80,7 @@ public class StanfordConvert
 			}
 			
 			//anything else
-			System.out.println("!!!"+thisOne+": "+hold);
+			toAFile.println("!!!"+thisOne+": "+hold);
 			
 		}
 		System.out.println("\t</"+oliName+">");
@@ -108,6 +112,7 @@ public class StanfordConvert
 				System.out.println("\t\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
 									"\t\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
 			
+				toAFile.println(oliName+": " + matcher.group("name"));
 				continue;
 			}
 			
@@ -130,7 +135,7 @@ public class StanfordConvert
 			}
 			
 			//anything else
-			System.out.println("!!!"+thisOne+": "+hold);
+			toAFile.println("!!!"+thisOne+": "+hold);
 			
 		}
 		System.out.println("\t\t</"+oliName+">");
@@ -162,6 +167,7 @@ public class StanfordConvert
 				System.out.println("\t\t\t<item>\n"+
 									"\t\t\t\t<resourceref idref=\""+makeId(matcher.group("name"))+"\"/>\n"+
 									"\t\t\t</item>");
+				toAFile.println(oliName+": " + matcher.group("name"));
 				continue;
 			}
 			
@@ -184,7 +190,7 @@ public class StanfordConvert
 			}
 			
 			//anything else
-			System.out.println("!!!"+thisOne+": "+hold);
+			toAFile.println("!!!"+thisOne+": "+hold);
 		}
 		
 		fromTextFile.close();
@@ -192,7 +198,7 @@ public class StanfordConvert
 	
 	public static void html(String filename) throws IOException
 	{
-		System.out.println(filename);
+		toAFile.println(filename);
 	}
 	
 	public static String makeId(String fixCharacters)
