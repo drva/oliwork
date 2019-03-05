@@ -1,3 +1,15 @@
+/*
+I am about to change the name of this file to StanfordConvertChapterToHTML, and (before that) 
+make a copy and work from the copy on converting into our xml and stuff. 
+*/
+
+/*
+This program takes a chapter in Stanford format and outputs
+-proto-outline type thing to the console
+-an html file with markers for units, modules, and pages, and all the html content strung together
+in order, with pointers to other stuff, which is not currently being processed, placed in text areas.
+*/
+
 //args[0] is the Stanford course files directory, 
 //args[1] is the rest of the address of the first file to process
 
