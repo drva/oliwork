@@ -216,7 +216,7 @@ public class StanfordConvertXML
 			
 			//anything else
 				//here I am putting it in a codeblock as I think that should hold it without causing problems in the xml
-			toAFile.println("<codeblock sytax=\"xml\">"+"\n<!-- !!!"+thisOne+"--->\n"+hold+"\n</codeblock>"); 
+			toAFile.println("<codeblock syntax=\"xml\">"+"\n<!-- !!!"+thisOne+"-->\n"+hold.replaceAll("<", "&lt;").replaceAll(">","&gt;")+"\n</codeblock>"); //apparently codeblocks can't actually contain tags, need to do the replacing of <>s 
 		}
 		
 		toAFile.close(); //closing it here instead of at the end tag so if there's like a blank line after the end tag for some reason or something it won't break
@@ -228,15 +228,22 @@ public class StanfordConvertXML
 		String xmlfile = filename+".xml";
 		String htmlfile = filename+".html";
 		
+		String XMLContent = "";
+		
 		Scanner fromHTML = new Scanner(new File(htmlfile));
 		Scanner fromXML = new Scanner(new File(xmlfile));
 		
-		//copy the xml files into our files as comments to preserve them as notes. Can keep the <>s because it's in a comment
-		toAFile.println("<!--The .xml file paired with the source html file read:");
+		//I don't want to copy in the licensings so I check if this is one of those and if it is I do't copy it in
 		while(fromXML.hasNext())
 		{
-			toAFile.println(fromXML.nextLine());
+			XMLContent=XMLContent+fromXML.nextLine();
 		}
+		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Licensing\"[\\s\\S]+?")) //contains() doesn't do regex and I want it to catch spacing variations around the =
+			return;
+		
+		//copy the xml files into our files as comments to preserve them as notes. Can keep the <>s because it's in a comment
+		toAFile.println("<!--The .xml file paired with the source html file read:");
+		toAFile.print(XMLContent); //since I have it in a string now
 		toAFile.println("-->");
 		
 		fromXML.close();
@@ -285,6 +292,7 @@ public class StanfordConvertXML
 	
 	public static String xmlifyContent(String fixCharacters) //from LOConvert, modified
 	{
+//this is actually causing problems for what-were-nbsps and stuff; will want to fix		
 		fixCharacters = fixCharacters.replaceAll("&", "&amp;"); //goes first so it doesn't overwrite the others replacements after
  		//currently leaving these out so they don't mess up tags (also just found out from googling that ' and " don't even need to be escaped in text (neither does > actually))
  		//fixCharacters = fixCharacters.replaceAll("<", "&lt;");
