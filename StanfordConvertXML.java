@@ -251,26 +251,44 @@ public class StanfordConvertXML
 		//process the html file
 		String hold="";
 		String hRegex = "(?<pre>[\\s\\S]*?)(?<header><h(?<num>[3-6])>)(?<post>[\\s\\S]*)"; //lines with headers
+		boolean openSubsection = false;
+		int[] openSubsectionLevels = new int[7]; //for legibility ease, openSubsectionLevels[5] represents h5 and so on (and [0-2] just get ignored since they either don't exist or are dealt with in other ways).
 		
 			//each html file is a section
 		toAFile.println("\t\t<section>");
 		while(fromHTML.hasNext())
 		{
 			hold = fromHTML.nextLine();
-			//handling headers
+			//handling headers (note, in the chapter I have I only found (below h2s) h3s and h4, but better be prepared for h5s and h6s too in case they do come up anywhere.
 			if(hold.matches(hRegex))
 			{
 				pattern = Pattern.compile(hRegex);
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
+				//so I'm translating headers into sections, but sections need closing tags, so I need to put those in at the right times. The right times are 'I hit a new header of equal or higher level' (this) (where 3 is higher level than 4 etc) or 'end of file'.
+				if(openSubsection)
+				{
+					closeSubsections(Integer.parseInt(matcher.group("num")), openSubsectionLevels);
+					openSubsection=false;
+				}
+				
 				if(!matcher.group("pre").equals("")) //if there was something on the line before the header I want to put a newline after it before inserting the section tag, but if there wasn't anything I don't want a blank newline. 
 					toAFile.println(xmlifyContent(matcher.group("pre")));
 				toAFile.println(printTabs(Integer.parseInt(matcher.group("num")))+"<section>\n"+matcher.group("header")+xmlifyContent(matcher.group("post")));
+				
+				openSubsection=true;
+				openSubsectionLevels[Integer.parseInt(matcher.group("num"))]=1;
 			}
 			
 			else
 				toAFile.println(xmlifyContent(hold));
+		}
+		//so I'm translating headers into sections, but sections need closing tags, so I need to put those in at the right times. The right times are 'I hit a new header of equal or higher level' (where 3 is higher level than 4 etc) or 'end of file' (this).
+		if(openSubsection)
+		{
+			closeSubsections(3, openSubsectionLevels); //end of file means close any sections I have open, and h3 is the highest level I handle in this way
+			openSubsection=false;
 		}
 		toAFile.println("\t\t</section>");
 		
@@ -319,6 +337,20 @@ public class StanfordConvertXML
  		
  		return fixCharacters;
 	}
+
+	public static void closeSubsections(int level, int[] openSubsectionLevels)
+	{
+		//so if I hit a new h6 and I had a previous section headed by an h6 open, I want to close the old one. But if I had a previous section headed by an h4 say open, I don't want to close it - it can keep going with this new h6 section inside it. But if I hit a new h4, I do also want to close any h5 or h6 sections I had open too.
+		for(int i=openSubsectionLevels.length-1; i>=level; i--)
+		{
+			//a 1 there marks that I actually did open a section, so it needs to be closed
+			if(openSubsectionLevels[i]==1)
+			{
+				toAFile.println(printTabs(i)+"</section>");
+				openSubsectionLevels[i]=0; 	//checked and yes this will change the array up in the original method too https://stackoverflow.com/questions/21653048/changing-array-in-method-changes-array-outside
+			}
+		}
+	} 
 	
 	public static String printTabs(int numtabs)
 	{
