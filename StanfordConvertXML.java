@@ -249,11 +249,28 @@ public class StanfordConvertXML
 		fromXML.close();
 		
 		//process the html file
+		String hold="";
+		String hRegex = "(?<pre>[\\s\\S]*?)(?<header><h(?<num>[3-6])>)(?<post>[\\s\\S]*)"; //lines with headers
+		
 			//each html file is a section
 		toAFile.println("\t\t<section>");
 		while(fromHTML.hasNext())
 		{
-			toAFile.println(xmlifyContent(fromHTML.nextLine()));
+			hold = fromHTML.nextLine();
+			//handling headers
+			if(hold.matches(hRegex))
+			{
+				pattern = Pattern.compile(hRegex);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				if(!matcher.group("pre").equals("")) //if there was something on the line before the header I want to put a newline after it before inserting the section tag, but if there wasn't anything I don't want a blank newline. 
+					toAFile.println(xmlifyContent(matcher.group("pre")));
+				toAFile.println(printTabs(Integer.parseInt(matcher.group("num")))+"<section>\n"+matcher.group("header")+xmlifyContent(matcher.group("post")));
+			}
+			
+			else
+				toAFile.println(xmlifyContent(hold));
 		}
 		toAFile.println("\t\t</section>");
 		
@@ -301,5 +318,15 @@ public class StanfordConvertXML
  		//fixCharacters = fixCharacters.replaceAll("\"", "&quot;");
  		
  		return fixCharacters;
+	}
+	
+	public static String printTabs(int numtabs)
+	{
+		//checked: no you can't do string multiplication in java, this suggests a method https://stackoverflow.com/questions/2255500/can-i-multiply-strings-in-java-to-repeat-sequences, I'm just doing a loop
+		String toReturn="";
+		for(int i=0; i<numtabs; i++)
+			toReturn=toReturn+"\t";
+		
+		return toReturn;	
 	}
 }
