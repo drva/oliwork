@@ -23,6 +23,7 @@ public class StanfordConvertXML
 	public static String regexLinkEnd = " url_name=\"(?<fileId>[0-9a-z]+)\"/>";
 	
 	public static PrintWriter toAFile;
+	public static PrintWriter toLOFile;
 
 	public static void main(String[] args) throws IOException
 	{
@@ -150,6 +151,9 @@ public class StanfordConvertXML
 		String nextOneDown = "html";
 		String oliName = "page";
 		
+		//moving this up here because I need it to pass to the html handler for LO reasons
+		String pageID = "unknown";
+		
 		Scanner fromTextFile = new Scanner(new File(filename));
 		
 		String hold="";
@@ -165,7 +169,7 @@ public class StanfordConvertXML
 				matcher.matches();
 				
 				//saving them since I need them more than once in this one
-				String pageID = makeId(matcher.group("name"));
+				pageID = makeId(matcher.group("name"));
 				String pageTitle = xmlifyTitleId(matcher.group("name"));
 				
 				System.out.println("\t\t\t<item>\n"+
@@ -186,7 +190,6 @@ public class StanfordConvertXML
 								"\t</head>\n"+
 								"\t<body>");
 					//so there's a problem where learning objective stuff goes in the head and I don't have those yet to put there. Will handle that later.
-
 				
 				continue;
 			}
@@ -199,7 +202,7 @@ public class StanfordConvertXML
 				matcher.matches();
 				
 				//this one doesn't have the .xml ending like the others since htmls have both an xml and an html file
-				html(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId"));
+				html(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId"), pageID);
 			
 				continue;
 			}
@@ -223,7 +226,7 @@ public class StanfordConvertXML
 		fromTextFile.close();
 	}
 	
-	public static void html(String filename) throws IOException
+	public static void html(String filename, String pageID) throws IOException
 	{
 		String xmlfile = filename+".xml";
 		String htmlfile = filename+".html";
@@ -250,9 +253,15 @@ public class StanfordConvertXML
 		
 		//process the html file
 		String hold="";
+		
 		String hRegex = "(?<pre>[\\s\\S]*?)(?<header><h(?<num>[3-6])>)(?<post>[\\s\\S]*)"; //lines with headers
 		boolean openSubsection = false;
 		int[] openSubsectionLevels = new int[7]; //for legibility ease, openSubsectionLevels[5] represents h5 and so on (and [0-2] just get ignored since they either don't exist or are dealt with in other ways).
+		
+		String loHeadRegex = "[\\s\\S]*?<h2[\\s\\S]*?>Learning Objectives?</h2>[\\s\\S]*"; //finding learning objective sections
+		boolean expectLOs = false;
+		String loRegex="\\s*<li>(?<lo>[\\s\\S]+?)</li>\\s*";
+		int numLO=1;
 		
 			//each html file is a section
 		toAFile.println("\t\t<section>");
@@ -279,10 +288,44 @@ public class StanfordConvertXML
 				
 				openSubsection=true;
 				openSubsectionLevels[Integer.parseInt(matcher.group("num"))]=1;
+				
+				continue;
 			}
 			
-			else
-				toAFile.println(xmlifyContent(hold));
+			//handling learning objectives. Atm I am putting LO's in their own file file, changing the actual LO text to a standard message in the workbook file, and leaving the rest of the header alone to deal with in the xslt
+			if(hold.matches(loHeadRegex))
+			{
+				expectLOs=true;
+				
+				//making an LO page (had put this in vertical() because I needed the page id, but now I pass that in so moving it to here) (took format from ELearning course creation files)
+				toLOFile = new PrintWriter(new File(directoryForPages+"/LOs_"+pageID+".xml"));
+				toLOFile.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+								"<!DOCTYPE objectives PUBLIC \"-//Carnegie Mellon University//DTD Learning Objectives 2.0//EN\" \"http://oli.web.cmu.edu/dtd/oli_learning_objectives_2_0.dtd\">\n"+
+								"<objectives id=\"LOs_"+pageID+"\">\n"+
+								"\t<title>LOs</title>");
+			}
+			if(expectLOs && hold.matches(loRegex)) //the LOs here are just list items so I need to flag when I'm expecting them (after an LO header)
+			{
+				pattern = Pattern.compile(loRegex);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				toLOFile.println("\t<objective id=\""+pageID+"_LO_"+numLO+"\">"+matcher.group("lo")+"</objective>");
+				numLO++;
+				
+				toAFile.println("<li>LO WAS HERE</li>"); //replacing with a standard thing for easier removal in xslt
+				
+				continue;
+			}
+			if(expectLOs && hold.matches("[\\s\\S]*?</div>[\\s\\S]*"))
+			{
+				//done with all the LOs so stop expecting them and close their file.
+				expectLOs=false;
+				toLOFile.println("</objectives>");
+				toLOFile.close();
+			}
+			
+			toAFile.println(xmlifyContent(hold));
 		}
 		//so I'm translating headers into sections, but sections need closing tags, so I need to put those in at the right times. The right times are 'I hit a new header of equal or higher level' (where 3 is higher level than 4 etc) or 'end of file' (this).
 		if(openSubsection)
