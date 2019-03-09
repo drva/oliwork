@@ -9,12 +9,35 @@
         doctype-system="http://oli.web.cmu.edu/dtd/oli_workbook_page_3_8.dtd"
         indent="yes"/>
     
+    <!--Setting up to find the LO file-->
+    <xsl:variable name="fileid" select="workbook_page/@id"/>
+    <xsl:variable name="lofile" select="concat('LOs_',$fileid,'.xml')"/>
+    
     <!--I don't want to miss anything, so adding the identity transformation to by default copy everything
         (and be overidden by more specific templates for things that need different handling)-->
     <xsl:template match="@* | node()">
         <xsl:copy>
             <xsl:apply-templates select="@* | node()"/>
         </xsl:copy>
+    </xsl:template>
+    
+    <!--pulling in the learning objectives from their file. 
+        Note, atm LO file needs to be in the same directory as the xsl document.
+        https://www.xml.com/pub/a/2002/03/06/xslt.html-->
+    <xsl:template match="workbook_page/head">
+        <head>
+            <xsl:apply-templates select="@* | node()"/>
+            <xsl:if test="document($lofile)">
+                <xsl:apply-templates select="document($lofile)/objectives/objective"/>
+            </xsl:if>  
+        </head>
+    </xsl:template>
+    <xsl:template match="objective">
+        <objref>
+            <xsl:attribute name="idref">
+                <xsl:value-of select="./@id"/>
+            </xsl:attribute>
+        </objref>
     </xsl:template>
     
     <!--were-h1s will be put in comments - don't want them in the output because the page title was already generated from display name, 
