@@ -9,15 +9,12 @@
         doctype-system="http://oli.web.cmu.edu/dtd/oli_workbook_page_3_8.dtd"
         indent="yes"/>
     
-    <xsl:template match="/">
-        <workbook_page>
-            <xsl:apply-templates/>
-        </workbook_page>
-    </xsl:template>
-    
-    <!--keep comments-->
-    <xsl:template match="comment()">
-        <xsl:copy/>
+    <!--I don't want to miss anything, so adding the identity transformation to by default copy everything
+        (and be overidden by more specific templates for things that need different handling)-->
+    <xsl:template match="@* | node()">
+        <xsl:copy>
+            <xsl:apply-templates select="@* | node()"/>
+        </xsl:copy>
     </xsl:template>
     
     <!--were-h1s will be put in comments - don't want them in the output because the page title was already generated from display name, 
@@ -39,17 +36,4 @@
             </body>
         </section> 
     </xsl:template>
-    
-    <xsl:template match="title|head|body|p|ol|ul|li">
-        <xsl:copy copy-namespaces="no">
-            <xsl:apply-templates/>
-        </xsl:copy>
-    </xsl:template>
-    
-    <xsl:template match="codeblock">
-        <xsl:copy copy-namespaces="no">
-            <xsl:apply-templates/>
-        </xsl:copy>
-    </xsl:template>
-    
 </xsl:stylesheet>
