@@ -21,7 +21,11 @@
         but want them available because the two don't always match and this way they are easily available to compare-->
     <xsl:template match="h1">
         <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text><h1><xsl:value-of select="."/></h1>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> <!--Trying to figure out how to do this. &lt;!- etc generates that same thing in output, which I don't want. From https://stackoverflow.com/questions/3932152/output-element-in-comments tried the xsl:comment thing but that gets rid of the h1 tags. From same source found this, which works!--> 
-    </xsl:template> 
+    </xsl:template>
+    <!--generated-from-htmls-sections headed by h1s should actually not be sections, since the h1 is just the page title, not a section on the page-->
+    <xsl:template match="section[h1]">
+        <xsl:apply-templates select="@* | node()"/>
+    </xsl:template>
     
     <!--sections were already generated so just need to change headers to the titles of those sections-->
     <xsl:template match="h2|h3|h4|h5|h6">
@@ -36,4 +40,17 @@
             </body>
         </section> 
     </xsl:template>
+    
+    <!--don't think we need these since we do our own styling-->
+    <xsl:template match="link[@rel='stylesheet']"></xsl:template>
+    <!--Get rid of the LO section-->
+    <xsl:template match="div[descendant::li[matches(text(),'LO WAS HERE')]]"></xsl:template>
+    
+    <xsl:template match="strong">
+        <em style="bold"><xsl:apply-templates select="@* | node()"/></em>
+    </xsl:template>
+    <xsl:template match="i">
+        <em style="italic"><xsl:apply-templates select="@* | node()"/></em>
+    </xsl:template>
+    
 </xsl:stylesheet>
