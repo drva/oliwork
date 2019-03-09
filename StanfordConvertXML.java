@@ -254,7 +254,7 @@ public class StanfordConvertXML
 		//process the html file
 		String hold="";
 		
-		String hRegex = "(?<pre>[\\s\\S]*?)(?<header><h(?<num>[3-6])>)(?<post>[\\s\\S]*)"; //lines with headers
+		String hRegex = "(?<pre>[\\s\\S]*?)(?<header><h(?<num>[3-6])>)(?<restofheader>[\\s\\S]*?<\\/h[3-6]>)(?<post>[\\s\\S]*)"; //lines with headers (can't actually check if the start and end tags match with regex but that should have been handled by the edX thing since otherwise it would be bad html)
 		boolean openSubsection = false;
 		int[] openSubsectionLevels = new int[7]; //for legibility ease, openSubsectionLevels[5] represents h5 and so on (and [0-2] just get ignored since they either don't exist or are dealt with in other ways).
 		
@@ -284,7 +284,8 @@ public class StanfordConvertXML
 				
 				if(!matcher.group("pre").equals("")) //if there was something on the line before the header I want to put a newline after it before inserting the section tag, but if there wasn't anything I don't want a blank newline. 
 					toAFile.println(xmlifyContent(matcher.group("pre")));
-				toAFile.println(printTabs(Integer.parseInt(matcher.group("num")))+"<section>\n"+matcher.group("header")+xmlifyContent(matcher.group("post")));
+				//sections also need bodies, which go after the title (which is currently the header)	
+				toAFile.println(printTabs(Integer.parseInt(matcher.group("num")))+"<section>\n"+matcher.group("header")+matcher.group("restofheader")+"\n"+printTabs(Integer.parseInt(matcher.group("num"))+1)+"<body>"+xmlifyContent(matcher.group("post")));
 				
 				openSubsection=true;
 				openSubsectionLevels[Integer.parseInt(matcher.group("num"))]=1;
@@ -389,7 +390,7 @@ public class StanfordConvertXML
 			//a 1 there marks that I actually did open a section, so it needs to be closed
 			if(openSubsectionLevels[i]==1)
 			{
-				toAFile.println(printTabs(i)+"</section>");
+				toAFile.println(printTabs(i+1)+"</body>\n"+printTabs(i)+"</section>");
 				openSubsectionLevels[i]=0; 	//checked and yes this will change the array up in the original method too https://stackoverflow.com/questions/21653048/changing-array-in-method-changes-array-outside
 			}
 		}
