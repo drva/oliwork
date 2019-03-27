@@ -12,6 +12,9 @@
     <!--Setting up to find the LO file-->
     <xsl:variable name="fileid" select="workbook_page/@id"/>
     <xsl:variable name="lofile" select="concat('LOs_',$fileid,'.xml')"/>
+    <!--File that maps the EdX file names to the new OLI file names. 
+        At the moment must be in the same directory as xsl file.-->
+    <xsl:variable name="pagestable" select="'pagesTable.xml'"/>
     
     <!--I don't want to miss anything, so adding the identity transformation to by default copy everything
         (and be overidden by more specific templates for things that need different handling)-->
@@ -64,10 +67,13 @@
         </section> 
     </xsl:template>
     
-    <!--don't think we need these since we do our own styling-->
-    <xsl:template match="link[@rel='stylesheet']"></xsl:template>
     <!--Get rid of the LO section-->
     <xsl:template match="div[descendant::li[matches(text(),'LO WAS HERE')]]"></xsl:template>
+    
+    <!--don't think we need these since we do our own styling-->
+    <xsl:template match="link[@rel='stylesheet']"></xsl:template>
+    <!--these seem to generally have their contents commented out already?-->
+    <xsl:template match="style"></xsl:template>
     
     <xsl:template match="strong">
         <em style="bold"><xsl:apply-templates select="@* | node()"/></em>
@@ -75,5 +81,37 @@
     <xsl:template match="i">
         <em style="italic"><xsl:apply-templates select="@* | node()"/></em>
     </xsl:template>
+    
+    <!--NOT FINISHED-->
+    <!--links that jump to other course pages-->
+    <xsl:template match="a[matches(@href,'/jump_to_id/[a-z0-9]+')]">
+        <xsl:variable name="pagetarget" select="tokenize(./@href,'/')[last()]"/>
+        <xref>
+            <xsl:attribute name="idref">
+                <xsl:value-of select="document($pagestable)/pages/page[@filename=$pagetarget]/id/@pageid"/>
+            </xsl:attribute>
+            <xsl:apply-templates select="@*[name()!='href'] | node()"/>
+        </xref>
+    </xsl:template>
+    <!--external links-->
+    <!--<xsl:template match="a">
+        <link>
+            --><!--<xsl:if test="./@target='[object Object]'"> 
+                <xsl:attribute name="target"><xsl:text>new</xsl:text></xsl:attribute>
+            </xsl:if> 
+            <xsl:apply-templates select="@*[name()!='target'] | node()"/>--><!--
+            <xsl:attribute name="href">
+                <xsl:value-of select="./@href"/>
+            </xsl:attribute>
+            <xsl:if test="./@title"> 
+                <xsl:attribute name="title"><xsl:value-of select="./@title"/></xsl:attribute> 
+            </xsl:if> 
+            <xsl:if test="./@target='[object Object]'">
+                <xsl:attribute name="target"><xsl:text>new</xsl:text></xsl:attribute> 
+            </xsl:if> 
+            <xsl:apply-templates select="@* | node()"/>
+        </link>
+    </xsl:template>-->
+    
     
 </xsl:stylesheet>
