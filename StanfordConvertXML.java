@@ -24,14 +24,22 @@ public class StanfordConvertXML
 	
 	public static PrintWriter toAFile;
 	public static PrintWriter toLOFile;
+	public static PrintWriter lookupTable;
 
 	public static void main(String[] args) throws IOException
 	{
+		//making an xml file to match the new page names I make to their filenames bc need it for links
+		lookupTable = new PrintWriter(new File("pagesTable.xml"));
+		lookupTable.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+							"<pages>");
+		
 		directoryPrefix = args[0];
 		
 		//at the moment this is taking in a *unit* ('chapter') and going from there
 		chapter(directoryPrefix+"/"+args[1]);
-	
+		
+		lookupTable.println("</pages>");
+		lookupTable.close();
 	}
 	
 	//chapters are units
@@ -189,7 +197,11 @@ public class StanfordConvertXML
 								"\t\t<title>"+pageTitle+"</title>\n"+
 								"\t</head>\n"+
 								"\t<body>");
-					//so there's a problem where learning objective stuff goes in the head and I don't have those yet to put there. Will handle that later.
+					//{now handled in the xslt} so there's a problem where learning objective stuff goes in the head and I don't have those yet to put there. Will handle that later.
+				
+				//logging to the file of name-file correspondences
+				String filenum = filename.split("[./]")[2]; //I only want the number id not the rest of the file address
+				lookupTable.println("<page filename=\""+filenum+"\"><id pageid=\""+pageID+"\"/></page>");
 				
 				continue;
 			}
