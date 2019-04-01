@@ -25,6 +25,8 @@ public class StanfordConvertXML
 	public static PrintWriter toAFile;
 	public static PrintWriter toLOFile;
 	public static PrintWriter lookupTable;
+	
+	public static boolean bodyClosedEarly=false;
 
 	public static void main(String[] args) throws IOException
 	{
@@ -223,8 +225,12 @@ public class StanfordConvertXML
 			if(hold.matches("</"+thisOne+">"))
 			{
 				//close off the workbook page
-				toAFile.println("\t</body>\n"+
-								"</workbook_page>");
+					//I now may have closed the body tag earlier if there was a Reference section, so checking for that
+				if(!bodyClosedEarly)
+					toAFile.println("\t</body>");
+				else
+					bodyClosedEarly=false;
+				toAFile.println("</workbook_page>");
 				
 				continue;
 			}
@@ -248,13 +254,19 @@ public class StanfordConvertXML
 		Scanner fromHTML = new Scanner(new File(htmlfile));
 		Scanner fromXML = new Scanner(new File(xmlfile));
 		
-		//I don't want to copy in the licensings so I check if this is one of those and if it is I do't copy it in
+		//I don't want to copy in the licensings so I check if this is one of those and if it is I don't copy it in
 		while(fromXML.hasNext())
 		{
 			XMLContent=XMLContent+fromXML.nextLine();
 		}
 		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Licensing\"[\\s\\S]+?")) //contains() doesn't do regex and I want it to catch spacing variations around the =
 			return;
+		//Reference goes in a <bib:file> which goes outside body so checking for that too
+		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Reference\"[\\s\\S]+?"))
+		{
+			toAFile.println("\t</body>");
+			bodyClosedEarly = true;
+		}
 		
 		//copy the xml files into our files as comments to preserve them as notes. Can keep the <>s because it's in a comment
 		toAFile.println("<!--The .xml file paired with the source html file read:");
