@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:bib="http://bibtexml.sf.net/"
     exclude-result-prefixes="xs"
     version="2.0">
     <xsl:output
@@ -67,7 +68,7 @@
         </section> 
     </xsl:template>
     
-    <!--Get rid of the LO section-->
+    <!--Get rid of the old LO section, since LOs get put in differently-->
     <xsl:template match="div[descendant::li[matches(text(),'LO WAS HERE')]]"></xsl:template>
     
     <!--don't think we need these since we do our own styling-->
@@ -75,6 +76,7 @@
     <!--these seem to generally have their contents commented out already?-->
     <xsl:template match="style"></xsl:template>
     
+    <!--bold and italics-->
     <xsl:template match="strong">
         <em style="bold"><xsl:apply-templates select="@* | node()"/></em>
     </xsl:template>
@@ -83,7 +85,7 @@
     </xsl:template>
     
     <!--NOT FINISHED-->
-    <!--links that jump to other course pages-->
+    <!--links that jump to other course pages (use the pagestable to find the correct oli id of the page)-->
     <xsl:template match="a[matches(@href,'/jump_to_id/[a-z0-9]+')]">
         <xsl:variable name="pagetarget" select="tokenize(./@href,'/')[last()]"/>
         <xref>
@@ -112,6 +114,44 @@
             <xsl:apply-templates select="@* | node()"/>
         </link>
     </xsl:template>-->
+    
+    <!--bibliography-->
+        <!--the bottom-of-page part-->
+            <!--the reference section should be turned into the bib file-->
+    <xsl:template match="section[h2[matches(text(),'Reference')]]" priority="1"><!--priority is so there is no ambiguous match with the general section handler-->
+        <bib:file>
+            <xsl:apply-templates select="./descendant::li"/>
+        </bib:file>
+    </xsl:template>
+            <!--each work cited should be a bib entry-->
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li">
+        <bib:entry>
+            <xsl:attribute name="id"><xsl:value-of select="./a[1]/@name"/></xsl:attribute>
+            <!--not currently trying to sort out the pieces/format of the works cited, so they're all misc->note-->
+            <bib:misc>
+                <bib:note>
+                    <xsl:apply-templates/>
+                </bib:note>
+            </bib:misc>
+        </bib:entry>
+    </xsl:template>
+            <!--handling contents of the works cited li's:
+               -we want to delete span and its contents, since that's the 'return to text above' piece and we don't want it
+               -we want to delete the first a since that was basically just holding the id and we handled it already
+               -other a's should have their href content also printed in case the url was not included in text
+               -all other descendants we want the bottom-out text of and nothing else
+               (the specific ones have higher priority than the general descendent one so they fire when needed)-->
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/span" priority="1"/>
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a[1]" priority="1"/>
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a[position()>1]" priority="1">
+        <xsl:apply-templates/>
+        <xsl:text> [</xsl:text><xsl:value-of select="./@href"/><xsl:text>]</xsl:text>
+    </xsl:template>
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li//*">
+        <xsl:apply-templates/>
+    </xsl:template>
+    
+    
     
     
 </xsl:stylesheet>
