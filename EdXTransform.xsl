@@ -88,12 +88,16 @@
     <!--links that jump to other course pages (use the pagestable to find the correct oli id of the page)-->
     <xsl:template match="a[matches(@href,'/jump_to_id/[a-z0-9]+')]">
         <xsl:variable name="pagetarget" select="tokenize(./@href,'/')[last()]"/>
-        <xref>
+        <xsl:variable name="olipageid" select="document($pagestable)/pages/page[@filename=$pagetarget]/id/@pageid"/> <!--in a variable since I'll use it twice-->
+        <activity_link>
             <xsl:attribute name="idref">
-                <xsl:value-of select="document($pagestable)/pages/page[@filename=$pagetarget]/id/@pageid"/>
+                <xsl:value-of select="$olipageid"/>
             </xsl:attribute>
-            <xsl:apply-templates select="@*[name()!='href'] | node()"/>
-        </xref>
+            <xsl:attribute name="title"> <!--for accessibility-->
+                <xsl:value-of select="$olipageid"/>
+            </xsl:attribute>
+            <xsl:apply-templates select="@*[name()!='href' and name()!='title'] | node()"/> <!--the internal links I saw didn't have titles but in case some do-->
+        </activity_link>
     </xsl:template>
     <!--external links-->
     <!--<xsl:template match="a">
