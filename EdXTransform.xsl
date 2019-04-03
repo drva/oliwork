@@ -154,7 +154,13 @@
     <xsl:template match="section[h2[matches(text(),'Reference')]]//li//*">
         <xsl:apply-templates/>
     </xsl:template>
-    
+        <!--internal citations-->
+    <xsl:template match ="sup[span[a[@alt='Click to view full citation']]]"> <!--need a way to catch the citations. Need to check if this works enough.-->
+        <cite>
+            <xsl:attribute name="entry"><xsl:value-of select="substring(./span/a/@href,2)"/></xsl:attribute> <!--need to strip out the #-->
+            <xsl:attribute name="title"><xsl:value-of select="./span/@title"/></xsl:attribute> <!--keeping it since it's there and helps accessibility-->
+        </cite>
+    </xsl:template>    
     
     
     
