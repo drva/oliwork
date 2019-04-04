@@ -68,6 +68,16 @@
         </section> 
     </xsl:template>
     
+    <!--there's at least one page where the first part has both an h1 and an h2 for unclear reasons. This is to handle that case-->
+        <!--section is treated like an h1 section; that is it should not be a section-->
+    <xsl:template match="section[h1 and h2]" priority="1">
+        <xsl:apply-templates select="@* | node()"/>
+    </xsl:template>
+        <!--the h2 is commented out like the h1-->
+    <xsl:template match="section[h1 and h2]/h2" priority="1">
+        <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text><h2><xsl:value-of select="."/></h2>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+    </xsl:template>
+    
     <!--Get rid of the old LO section, since LOs get put in differently-->
     <xsl:template match="div[descendant::li[matches(text(),'LO WAS HERE')]]"></xsl:template>
     
