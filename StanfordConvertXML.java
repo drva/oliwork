@@ -388,6 +388,7 @@ public class StanfordConvertXML
 		
 		fixCharacters = fixCharacters.replaceAll("[:@\\$%&\\/\\+,;\\s\\(\\)\\[\\]\\{\\}]", "");
 		fixCharacters = fixCharacters.replaceAll("[’\\?]",""); //not sure if ncname but xml didn't like it
+		fixCharacters = fixCharacters.replaceAll("[!]",""); //adding in StanfordConvertXML. not sure if ncname but xml didn't like it
 		
 		return fixCharacters;
 	}
