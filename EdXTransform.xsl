@@ -73,11 +73,12 @@
     
     <!--don't think we need these since we do our own styling-->
     <xsl:template match="link[@rel='stylesheet']"></xsl:template>
+    <xsl:template match="@style"></xsl:template>
     <!--these seem to generally have their contents commented out already?-->
     <xsl:template match="style"></xsl:template>
     
     <!--bold and italics-->
-    <xsl:template match="strong">
+    <xsl:template match="strong | b">
         <em style="bold"><xsl:apply-templates select="@* | node()"/></em>
     </xsl:template>
     <xsl:template match="i">
@@ -154,7 +155,7 @@
     <xsl:template match="section[h2[matches(text(),'Reference')]]//li//*">
         <xsl:apply-templates/>
     </xsl:template>
-        <!--internal citations-->
+        <!--in-text citations-->
     <xsl:template match ="sup[span[a[@alt='Click to view full citation']]]"> <!--need a way to catch the citations. Need to check if this works enough.-->
         <cite>
             <xsl:attribute name="entry"><xsl:value-of select="substring(./span/a/@href,2)"/></xsl:attribute> <!--need to strip out the #-->
@@ -162,6 +163,39 @@
         </cite>
     </xsl:template>    
     
-    
+<!--Some quickpass things - TO ACTUALLY HANDLE LATER-->
+    <xsl:template match="*[local-name()='math']"> <!--handling namespace problem: https://stackoverflow.com/questions/5239685/xml-namespace-breaking-my-xpath-->
+        <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
+            <math>
+                <xsl:apply-templates/>   
+            </math>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+    </xsl:template>
+    <xsl:template match="script">
+        <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
+        <script>
+            <xsl:apply-templates/>   
+        </script>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+    </xsl:template>  
+    <xsl:template match="li[@class='done']">
+        <li><xsl:text>✔ </xsl:text>
+            <xsl:apply-templates/> 
+        </li>
+    </xsl:template>
+    <xsl:template match="li[@class='notdone']">
+        <li><xsl:text>✗ </xsl:text>
+            <xsl:apply-templates/> 
+        </li>
+    </xsl:template>
+    <xsl:template match="a">
+        <link>
+            <xsl:apply-templates select="@href | @title | node()"/> 
+        </link>
+    </xsl:template>
+    <xsl:template match="img">
+        <image>
+            <xsl:attribute name="src"><xsl:value-of select="concat('..',replace(./@src,'static','webcontent'))"/></xsl:attribute>
+            <xsl:apply-templates select="@alt | @title | @height | @width | node()"/> 
+        </image>
+    </xsl:template>
     
 </xsl:stylesheet>
