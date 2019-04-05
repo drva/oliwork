@@ -77,6 +77,9 @@
     <xsl:template match="section[h1 and h2]/h2" priority="1">
         <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text><h2><xsl:value-of select="."/></h2>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
     </xsl:template>
+    <!--there's also at least one page where the source had empty headers, leading to sections with empty titles and bodies by default processing, which is invalid. 
+        Instead they should be removed.-->
+    <xsl:template match="section[count(*)=1 and h2[matches(text(),'\s*')]|h3[matches(text(),'\s*')]|h4[matches(text(),'\s*')]|h5[matches(text(),'\s*')]|h6[matches(text(),'\s*')]]"></xsl:template> <!--'has one child (so only the header) and the header is either empty or has just whitespace (in case that comes up)-->
     
     <!--Get rid of the old LO section, since LOs get put in differently-->
     <xsl:template match="div[descendant::li[matches(text(),'LO WAS HERE')]]"></xsl:template>
@@ -91,11 +94,15 @@
     <xsl:template match="strong | b">
         <em style="bold"><xsl:apply-templates select="@* | node()"/></em>
     </xsl:template>
-    <xsl:template match="i">
+    <xsl:template match="i | em"> <!--POSSIBLY CHECK note, we also allow a plain em tag but it looks like it produces bold italics and html em is usually italics?-->
         <em style="italic"><xsl:apply-templates select="@* | node()"/></em>
     </xsl:template>
     
-    <!--NOT FINISHED-->
+    <!--blockquote-->
+    <xsl:template match="blockquote">
+        <quote style="block"><xsl:apply-templates select="@* | node()"/></quote>
+    </xsl:template>
+    
     <!--links that jump to other course pages (use the pagestable to find the correct oli id of the page)-->
     <xsl:template match="a[matches(@href,'/jump_to_id/[a-z0-9]+')]">
         <xsl:variable name="pagetarget" select="tokenize(./@href,'/')[last()]"/>
@@ -139,13 +146,13 @@
         </bib:file>
     </xsl:template>
             <!--each work cited should be a bib entry-->
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li">
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li" priority="1">
         <bib:entry>
             <xsl:attribute name="id"><xsl:value-of select="./a[1]/@name"/></xsl:attribute>
             <!--not currently trying to sort out the pieces/format of the works cited, so they're all misc->note-->
             <bib:misc>
                 <bib:note>
-                    <xsl:apply-templates/>
+                    <xsl:apply-templates select="@* | node()"/>
                 </bib:note>
             </bib:misc>
         </bib:entry>
@@ -177,23 +184,23 @@
     <xsl:template match="*[local-name()='math']"> <!--handling namespace problem: https://stackoverflow.com/questions/5239685/xml-namespace-breaking-my-xpath-->
         <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
             <math>
-                <xsl:apply-templates/>   
+                <xsl:apply-templates select="@* | node()"/>   
             </math>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
     </xsl:template>
     <xsl:template match="script">
         <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
         <script>
-            <xsl:apply-templates/>   
+            <xsl:apply-templates select="@* | node()"/>   
         </script>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
     </xsl:template>  
     <xsl:template match="li[@class='done']">
         <li><xsl:text>✔ </xsl:text>
-            <xsl:apply-templates/> 
+            <xsl:apply-templates select="@*[name()!='class'] | node()"/> 
         </li>
     </xsl:template>
     <xsl:template match="li[@class='notdone']">
         <li><xsl:text>✗ </xsl:text>
-            <xsl:apply-templates/> 
+            <xsl:apply-templates select="@*[name()!='class'] | node()"/> 
         </li>
     </xsl:template>
     <xsl:template match="a">
@@ -207,5 +214,55 @@
             <xsl:apply-templates select="@alt | @title | @height | @width | node()"/> 
         </image>
     </xsl:template>
-    
+
+<!--Some further quickpass things - TO HANDLE BETTER LATER (these come out of attempting to mass process the entire content presentation chapter pages content with existing xslt)-->
+    <!--sections with no headers. Curently made into not sections.-->
+    <xsl:template match="section[not(h1) and not(h2) and not(h3) and not(h4) and not(h5) and not(h6)]">
+        <xsl:apply-templates select="@* | node()"/> 
+    </xsl:template>
+    <!--badly nested lists-->
+    <xsl:template match="ul/ul | ol/ul">
+        <li>
+            <ul>
+                <xsl:apply-templates/> <!--later will need to change to  select="@* | node()" and handle attributes-->
+            </ul>
+        </li>
+    </xsl:template>
+    <xsl:template match="ul/ol | ol/ol">
+        <li>
+            <ol>
+                <xsl:apply-templates/> <!--later will need to change to  select="@* | node()" and handle attributes-->
+            </ol>
+        </li>
+    </xsl:template>
+    <!--currently just being erased as tags. Will need to be improved: divs and spans might have functional attributes (some divs seem to have hidden), and br's are functional-->
+    <xsl:template match="div|span|br|center">
+        <xsl:apply-templates/> 
+    </xsl:template>
+    <!--list tags having not-permitted attributes stripped out (want to go through and handle better later, probably when have all the pages)-->
+    <xsl:template match="li[@*]|ul[@*]|ol[@*]">
+        <li><xsl:apply-templates select="@title | node()"/></li>
+    </xsl:template>
+    <xsl:template match="ul[@*]">
+        <ul><xsl:apply-templates select="@title | node()"/></ul>
+    </xsl:template>
+    <xsl:template match="ol[@*]">
+        <ol><xsl:apply-templates select="@title | node()"/></ol>
+    </xsl:template>
+    <!--currently being erased-->
+    <xsl:template match="@align"></xsl:template>
+    <xsl:template match="@class"></xsl:template>
+    <!--currently being commented out-->
+    <xsl:template match="g">
+        <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
+        <g>
+            <xsl:apply-templates select="@* | node()"/> 
+        </g>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+    </xsl:template>
+    <!--list tags having not-permitted attributes stripped out (want to go through and handle better later, probably when have all the pages)-->
+        <!--additional note, unconventional_examples.xml, which has iframes, also has download links. Those go through fine but we may want to do something about them since they're not our servers.-->
+    <xsl:template match="iframe">
+        <iframe><xsl:apply-templates select="@src | @height | @width | node()"/></iframe>
+    </xsl:template>
+
 </xsl:stylesheet>
