@@ -273,5 +273,12 @@
     <xsl:template match="td"><td><xsl:apply-templates/></td></xsl:template>
     <!--we don't have tbody-->
     <xsl:template match="tbody"><xsl:apply-templates/></xsl:template>
+    
+    <!--having an issue with bare text inside section bodies that used to be in divs-->
+    <xsl:template match="div/text()[matches(.,'\S')]">
+        <p>
+            <xsl:value-of select="."/>
+        </p>
+    </xsl:template>
 
 </xsl:stylesheet>
