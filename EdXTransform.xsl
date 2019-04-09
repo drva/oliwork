@@ -79,7 +79,7 @@
     </xsl:template>
     <!--there's also at least one page where the source had empty headers, leading to sections with empty titles and bodies by default processing, which is invalid. 
         Instead they should be removed.-->
-    <xsl:template match="section[count(*)=1 and h2[matches(text(),'\s*')]|h3[matches(text(),'\s*')]|h4[matches(text(),'\s*')]|h5[matches(text(),'\s*')]|h6[matches(text(),'\s*')]]"></xsl:template> <!--'has one child (so only the header) and the header is either empty or has just whitespace (in case that comes up)-->
+    <xsl:template match="section[count(*)=1 and h2[matches(text(),'\s*')]|h3[matches(text(),'\s*')]|h4[matches(text(),'\s*')]|h5[matches(text(),'\s*')]|h6[matches(text(),'\s*')]]" priority="1"></xsl:template> <!--'has one child (so only the header) and the header is either empty or has just whitespace (in case that comes up)-->
     
     <!--Get rid of the old LO section, since LOs get put in differently-->
     <xsl:template match="div[descendant::li[matches(text(),'LO WAS HERE')]]"></xsl:template>
@@ -89,6 +89,8 @@
     <xsl:template match="@style"></xsl:template>
     <!--these seem to generally have their contents commented out already?-->
     <xsl:template match="style"></xsl:template>
+    <!--colgroups (in tables) are only for styling (if I understand correctly), which we don't allow, so removing-->
+    <xsl:template match="colgroup"></xsl:template>
     
     <!--bold and italics-->
     <xsl:template match="strong | b">
@@ -193,12 +195,12 @@
             <xsl:apply-templates select="@* | node()"/>   
         </script>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
     </xsl:template>  
-    <xsl:template match="li[@class='done']">
+    <xsl:template match="li[@class='done']" priority =".7"> <!-- greater than .5 but below so def won't clash with bib stuff etc-->
         <li><xsl:text>✔ </xsl:text>
             <xsl:apply-templates select="@*[name()!='class'] | node()"/> 
         </li>
     </xsl:template>
-    <xsl:template match="li[@class='notdone']">
+    <xsl:template match="li[@class='notdone']" priority =".7">
         <li><xsl:text>✗ </xsl:text>
             <xsl:apply-templates select="@*[name()!='class'] | node()"/> 
         </li>
@@ -240,7 +242,7 @@
         <xsl:apply-templates/> 
     </xsl:template>
     <!--list tags having not-permitted attributes stripped out (want to go through and handle better later, probably when have all the pages)-->
-    <xsl:template match="li[@*]|ul[@*]|ol[@*]">
+    <xsl:template match="li[@*]">
         <li><xsl:apply-templates select="@title | node()"/></li>
     </xsl:template>
     <xsl:template match="ul[@*]">
@@ -264,5 +266,12 @@
     <xsl:template match="iframe">
         <iframe><xsl:apply-templates select="@src | @height | @width | node()"/></iframe>
     </xsl:template>
+    <!--table pieces currently having their attributes all stripped out-->
+    <xsl:template match="table"><table><xsl:apply-templates/></table></xsl:template>
+    <xsl:template match="tr"><tr><xsl:apply-templates/></tr></xsl:template>
+    <xsl:template match="th"><th><xsl:apply-templates/></th></xsl:template>
+    <xsl:template match="td"><td><xsl:apply-templates/></td></xsl:template>
+    <!--we don't have tbody-->
+    <xsl:template match="tbody"><xsl:apply-templates/></xsl:template>
 
 </xsl:stylesheet>
