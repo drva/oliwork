@@ -55,6 +55,7 @@
     </xsl:template>
     
     <!--sections were already generated so just need to change headers to the titles of those sections-->
+    <!--MAY WANT TO REVISE TO ACCOUNT FOR POSSIBILITY OF MULTIPLE TITLES IN A SECTION-->
     <xsl:template match="h2|h3|h4|h5|h6">
         <title><xsl:value-of select="."/></title>
     </xsl:template>
@@ -279,6 +280,26 @@
         <p>
             <xsl:value-of select="."/>
         </p>
+    </xsl:template>
+    
+    <!--blockquotes don't allow paragraphs. At the moment making it a notation pullout; will consider more later-->
+    <xsl:template match="blockquote[p]">
+        <pullout type="notation"><xsl:apply-templates select="@* | node()"/></pullout>
+    </xsl:template>
+    <!--had an issue like the bare text one, except it used to be in a span in a div, with a bold-->
+        <!--bold and italics-->
+    <xsl:template match="div/strong | div/b | div/span/strong | div/span/b">
+        <p><em style="bold"><xsl:apply-templates select="@* | node()"/></em></p>
+    </xsl:template>
+    <xsl:template match="div/i | div/em | div/span/i | div/span/em"> <!--POSSIBLY CHECK note, we also allow a plain em tag but it looks like it produces bold italics and html em is usually italics?-->
+        <p><em style="italic"><xsl:apply-templates select="@* | node()"/></em></p>
+    </xsl:template>
+    <!--basically table titles-->
+    <xsl:template match="div[h2 and div/table]">
+        <table>
+            <title><xsl:value-of select="./h2"/></title>
+            <xsl:apply-templates select="./descendant::table/*"/> <!--not doing the attributes since table attributes are currently being stripped out in general-->
+        </table>
     </xsl:template>
 
 </xsl:stylesheet>
