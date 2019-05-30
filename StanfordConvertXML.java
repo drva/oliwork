@@ -395,6 +395,7 @@ public class StanfordConvertXML
 	
 	public static String xmlifyContent(String fixCharacters) //from LOConvert, modified
 	{
+				
 //this is actually causing problems for what-were-nbsps and stuff; will want to fix		
 		fixCharacters = fixCharacters.replaceAll("&", "&amp;"); //goes first so it doesn't overwrite the others replacements after
  		//currently leaving these out so they don't mess up tags (also just found out from googling that ' and " don't even need to be escaped in text (neither does > actually))
@@ -402,6 +403,17 @@ public class StanfordConvertXML
  		//fixCharacters = fixCharacters.replaceAll(">", "&gt;");
  		//fixCharacters = fixCharacters.replaceAll("'", "&apos;");
  		//fixCharacters = fixCharacters.replaceAll("\"", "&quot;");
+ 		
+ 		//special characters (https://stackoverflow.com/questions/9625602/how-to-display-nbsp-in-xml-output need to be unicode)
+		//nbsp, mdash, rsquo, ndash, ldquo, rdquo, macr
+		//taking into account already converted ampersand
+		fixCharacters = fixCharacters.replaceAll("&amp;nbsp;", "&#xA0;");
+		fixCharacters = fixCharacters.replaceAll("&amp;mdash;", "&#x2014;");
+		fixCharacters = fixCharacters.replaceAll("&amp;rsquo;", "&#x2019;");
+		fixCharacters = fixCharacters.replaceAll("&amp;ndash;", "&#x2013;");
+		fixCharacters = fixCharacters.replaceAll("&amp;ldquo;", "&#x201C;");
+		fixCharacters = fixCharacters.replaceAll("&amp;rdquo;", "&#x201D;");
+		fixCharacters = fixCharacters.replaceAll("&amp;macr;", "&#xAF;");
  		
  		return fixCharacters;
 	}
