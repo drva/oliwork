@@ -334,7 +334,7 @@ public class StanfordConvertXML
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				toLOFile.println("\t<objective id=\""+pageID+"_LO_"+numLO+"\">"+matcher.group("lo")+"</objective>");
+				toLOFile.println("\t<objective id=\""+pageID+"_LO_"+numLO+"\">"+xmlifyContent(matcher.group("lo"))+"</objective>");
 				numLO++;
 				
 				toAFile.println("<li>LO WAS HERE</li>"); //replacing with a standard thing for easier removal in xslt
