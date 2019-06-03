@@ -284,7 +284,7 @@ public class StanfordConvertXML
 		
 		String loHeadRegex = "[\\s\\S]*?<h2[\\s\\S]*?>Learning Objectives?</h2>[\\s\\S]*"; //finding learning objective sections
 		boolean expectLOs = false;
-		String loRegex="\\s*<li>(?<lo>[\\s\\S]+?)</li>\\s*";
+		String loRegex="\\s*<li>(?<lo>[\\s\\S]+?)(</li>|<li>)\\s*"; //a few LO's turn out to 'terminate' with another <li> tag instead of closing tag. Going to try to have this script recognize those too, may walk back if this causes problems
 		int numLO=1;
 		
 			//each html file is a section
@@ -367,8 +367,11 @@ public class StanfordConvertXML
 		return ncName(xmlifyTitleId(fixCharacters.toLowerCase().replaceAll("\\s+", "_")));
 	}
 	
-	public static String xmlifyTitleId(String fixCharacters) //from OutlineConvert
+	public static String xmlifyTitleId(String fixCharacters) //from OutlineConvert, modified
 	{
+		//at least one of the edX files has a name where & is already represented as &amp;, which is therefore producing not what is wanted
+		fixCharacters = fixCharacters.replaceAll("&amp;", "and"); 
+		
 		//xml characters
  		fixCharacters = fixCharacters.replaceAll("&", "and"); 
  		fixCharacters = fixCharacters.replaceAll("<", "");
@@ -414,6 +417,10 @@ public class StanfordConvertXML
 		fixCharacters = fixCharacters.replaceAll("&amp;ldquo;", "&#x201C;");
 		fixCharacters = fixCharacters.replaceAll("&amp;rdquo;", "&#x201D;");
 		fixCharacters = fixCharacters.replaceAll("&amp;macr;", "&#xAF;");
+		
+		//while I'm here will also fix the <o:p> problem (there are empty <o:p> tags and they cause a namespace problem. Apparently this is just a microsoft thing https://stackoverflow.com/questions/7808968/what-do-op-elements-do-anyway/7809422)
+ 		fixCharacters = fixCharacters.replaceAll("<o:p>", "<p>");
+ 		fixCharacters = fixCharacters.replaceAll("</o:p>", "</p>");
  		
  		return fixCharacters;
 	}
