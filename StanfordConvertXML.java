@@ -51,6 +51,9 @@ public class StanfordConvertXML
 		String nextOneDown = "sequential";
 		String oliName = "unit";
 		
+		//needs to be up here to be passed on later
+		String unitid = "";
+		
 		Scanner fromTextFile = new Scanner(new File(filename));
 		
 		String hold="";
@@ -69,6 +72,7 @@ public class StanfordConvertXML
 				System.out.println("\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
 									"\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
 				
+				unitid=makeId(matcher.group("name"));
 				continue;
 			}
 			
@@ -79,7 +83,7 @@ public class StanfordConvertXML
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				sequential(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId")+".xml");
+				sequential(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId")+".xml", unitid); //now also handing on the unit id so it can be used in page filenames
 				
 				continue;
 			}
@@ -100,11 +104,14 @@ public class StanfordConvertXML
 	}
 	
 	//sequentials are modules
-	public static void sequential(String filename) throws IOException
+	public static void sequential(String filename, String unitid) throws IOException
 	{
 		String thisOne = "sequential";
 		String nextOneDown = "vertical";
 		String oliName = "module";
+		
+		//needs to be up here to be passed on later
+		String moduleid = "";	
 		
 		Scanner fromTextFile = new Scanner(new File(filename));
 		
@@ -123,7 +130,7 @@ public class StanfordConvertXML
 				System.out.println("\t\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
 									"\t\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
 			
-
+				moduleid = makeId(matcher.group("name"));
 				continue;
 			}
 			
@@ -134,7 +141,7 @@ public class StanfordConvertXML
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				vertical(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId")+".xml");
+				vertical(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId")+".xml", unitid, moduleid); //now also handing on the unit id and module id so it can be used in page filenames
 			
 				continue;
 			}
@@ -155,14 +162,15 @@ public class StanfordConvertXML
 	}
 	
 	//verticals are pages
-	public static void vertical(String filename) throws IOException
+	public static void vertical(String filename, String unitid, String moduleid) throws IOException
 	{
 		String thisOne = "vertical";
 		String nextOneDown = "html";
 		String oliName = "page";
 		
 		//moving this up here because I need it to pass to the html handler for LO reasons
-		String pageID = "unknown";
+		//page id being modified to have unit and module id in it to avoid name overlaps
+		String pageID = "u-"+unitid+"-m-"+moduleid+"-p-";
 		
 		Scanner fromTextFile = new Scanner(new File(filename));
 		
@@ -179,7 +187,7 @@ public class StanfordConvertXML
 				matcher.matches();
 				
 				//saving them since I need them more than once in this one
-				pageID = makeId(matcher.group("name"));
+				pageID = pageID+makeId(matcher.group("name"));
 				String pageTitle = xmlifyTitleId(matcher.group("name"));
 				
 				System.out.println("\t\t\t<item>\n"+
