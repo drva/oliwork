@@ -302,4 +302,7 @@
         </table>
     </xsl:template>
 
+<!--Some further quickpass things - TO HANDLE BETTER LATER (from trying to process chapter course structure)-->
+    <!--we do not allow empty tr's-->
+    <xsl:template match="tr[not(th) and not(td)]"/>
 </xsl:stylesheet>
