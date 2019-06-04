@@ -127,7 +127,7 @@ public class StanfordConvertXML
 				matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				System.out.println("\t\t<"+oliName+" id=\""+makeId(matcher.group("name"))+"\">\n"+
+				System.out.println("\t\t<"+oliName+" id=\""+"u-"+unitid+"-m-"+makeId(matcher.group("name"))+"\">\n"+
 									"\t\t\t<title>"+xmlifyTitleId(matcher.group("name"))+"</title>");
 			
 				moduleid = makeId(matcher.group("name"));
@@ -270,7 +270,7 @@ public class StanfordConvertXML
 		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Licensing\"[\\s\\S]+?")) //contains() doesn't do regex and I want it to catch spacing variations around the =
 			return;
 		//Reference goes in a <bib:file> which goes outside body so checking for that too
-		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Reference\"[\\s\\S]+?"))
+		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"References?\"[\\s\\S]+?"))
 		{
 			toAFile.println("\t</body>");
 			bodyClosedEarly = true;
