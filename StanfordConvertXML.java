@@ -1,5 +1,6 @@
 //args[0] is the Stanford course files directory, 
-//args[1] is the rest of the address of the first file to process
+//args[1] is the rest of the address of the first file to process 
+//args[2] is chapter to do chapter by chapter and course to do course.
 
 import java.io.*;
 import java.util.Scanner;
@@ -37,11 +38,79 @@ public class StanfordConvertXML
 		
 		directoryPrefix = args[0];
 		
-		//at the moment this is taking in a *unit* ('chapter') and going from there
-		chapter(directoryPrefix+"/"+args[1]);
+		//can do a whole course or chapter by chapter
+		//if there's a second arg telling you a chapter, do that chapter
+		if(args[2].equals("chapter"))
+			chapter(directoryPrefix+"/"+args[1]);
+//WILL WANT TO ADJUST THIS TO TAKE IN COURSE.XML AND GET THE FILENAME THERE (I THINK IT'S THERE)
+		else if(args[2].equals("course"))
+			course(directoryPrefix+"/"+args[1]);
+		else
+			System.out.println("Please enter course to do a whole course and chapter to do a chapter");
 		
 		lookupTable.println("</pages>");
 		lookupTable.close();
+	}
+	
+	public static void course(String filename) throws IOException
+	{
+		String thisOne = "course";
+		String nextOneDown = "chapter";
+		//String oliName = 
+		
+		//needs to be up here to be passed on later
+		//String unitid = "";
+		
+		String regexCourseNameLine = "\\s*<"+thisOne+"\\s+[\\s\\S]*?\\s+display_name=\"(?<name>[\\s\\S]+?)\"[\\s\\S]*>"; //different from others bc display_name does not immediately follow the tag name
+		String regexwikislug = "\\s*<wiki\\s+slug=\"[\\s\\S]+?\"\\s*\\/>"; //seems to be a thing course files have. (regex101 says / needs to be escaped. Don't think I escaped it in other regex, but will try to abide).
+		
+		Scanner fromTextFile = new Scanner(new File(filename));
+		
+		String hold="";
+		while(fromTextFile.hasNext())
+		{
+			hold = fromTextFile.nextLine().trim(); //also get rid of leading and trailing whitespace
+			
+			//if it's the name
+			if(hold.matches(regexCourseNameLine))
+			{
+				pattern = Pattern.compile(regexNameLine);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				//currently not processing any of the other attributes etc here
+				//GOING TO WANT TO MAKE THE ORG FILE HERE
+				
+				continue;
+			}
+			
+			//if it's a link
+			if(hold.matches(regexLinkBegin+nextOneDown+regexLinkEnd))
+			{
+				pattern = Pattern.compile(regexLinkBegin+nextOneDown+regexLinkEnd);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				chapter(directoryPrefix+"/"+nextOneDown+"/"+matcher.group("fileId")+".xml"); 
+				
+				continue;
+			}
+						
+			//if it's the ending tag (we can ignore it)
+			if(hold.matches("</"+thisOne+">"))
+			{
+				//GOING TO WANT TO CLOSE ORG FILE HERE (OR BELOW)
+				continue;
+			}
+			
+			
+			
+			//anything else
+			System.out.println("!!!"+thisOne+": "+hold); 
+			
+		}
+		
+		fromTextFile.close();
 	}
 	
 	//chapters are units
