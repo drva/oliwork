@@ -28,6 +28,10 @@ public class StanfordConvertXML
 	public static PrintWriter lookupTable;
 	
 	public static boolean bodyClosedEarly=false;
+	
+	//it turns out there is another format LOs can have (aside from being all in one html in a div), as in the philanthropy course, where they are distributed among html files, one per. Variables for helping handle that (since they're as noted distributed among multiple htmls and can't be handled all one)
+	public static boolean distributedLOsOpen = false;
+	public static int numDistLO = 1;
 
 	public static void main(String[] args) throws IOException
 	{
@@ -319,6 +323,16 @@ public class StanfordConvertXML
 		
 		toAFile.close(); //closing it here instead of at the end tag so if there's like a blank line after the end tag for some reason or something it won't break
 		fromTextFile.close();
+		
+		//it turns out there is another format LOs can have (aside from being all in one html in a div), as in the philanthropy course, where they are distributed among html files, one per. Closing stuff relevant to that off, if there was any, so can start fresh on next page etc
+		if(distributedLOsOpen)
+		{
+			distributedLOsOpen = false;
+			numDistLO = 1;
+			toLOFile.println("</objectives>");
+			toLOFile.close();
+		}
+				
 	}
 	
 	public static void html(String filename, String pageID) throws IOException
@@ -331,11 +345,12 @@ public class StanfordConvertXML
 		Scanner fromHTML = new Scanner(new File(htmlfile));
 		Scanner fromXML = new Scanner(new File(xmlfile));
 		
-		//I don't want to copy in the licensings so I check if this is one of those and if it is I don't copy it in
 		while(fromXML.hasNext())
 		{
 			XMLContent=XMLContent+fromXML.nextLine();
 		}
+		fromXML.close();
+		//I don't want to copy in the licensings so I check if this is one of those and if it is I don't copy it in
 		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Licensing\"[\\s\\S]+?")) //contains() doesn't do regex and I want it to catch spacing variations around the =
 			return;
 		//Reference goes in a <bib:file> which goes outside body so checking for that too
@@ -344,13 +359,43 @@ public class StanfordConvertXML
 			toAFile.println("\t</body>");
 			bodyClosedEarly = true;
 		}
+		//it turns out there is another format LOs can have, as in the philanthropy course, where they are distributed among html files, one per. Handling those
+		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Learning\\s+Objective\"[\\s\\S]+?"))
+		{
+			if(!distributedLOsOpen) //if this is the first LO of this page we've encountered
+			{
+				//making an LO page (took format from ELearning course creation files)
+				toLOFile = new PrintWriter(new File(directoryForPages+"/LOs_"+pageID+".xml")); //this is already global scope so we'll have access to it across the multiple htmls
+				toLOFile.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+								"<!DOCTYPE objectives PUBLIC \"-//Carnegie Mellon University//DTD Learning Objectives 2.0//EN\" \"http://oli.web.cmu.edu/dtd/oli_learning_objectives_2_0.dtd\">\n"+
+								"<objectives id=\"LOs_"+pageID+"\">\n"+
+								"\t<title>LOs</title>");
+				distributedLOsOpen = true;
+			}
+			
+			//handling here separately since these don't write to the main file, aren't sections, etc
+					//copy the xml files into our files as comments to preserve them as notes. Can keep the <>s because it's in a comment
+			toLOFile.println("<!--The .xml file paired with the source html file read:");
+			toLOFile.print(XMLContent); //since I have it in a string now
+			toLOFile.println("-->");
+			
+				//process the html file (which contains a learning objective)
+			toLOFile.println("\t<objective id=\""+pageID+"_LO_"+numDistLO+"\">"); //open objective tag for this objective
+			numDistLO++;
+			String hold = "";
+			while(fromHTML.hasNext())
+			{
+				toLOFile.println(xmlifyContent(hold));
+			}
+			fromHTML.close();
+			toLOFile.println("</objective>"); //close objective tag
+			return; //exit early since the rest of the method is meant for not-these-files
+		}
 		
 		//copy the xml files into our files as comments to preserve them as notes. Can keep the <>s because it's in a comment
 		toAFile.println("<!--The .xml file paired with the source html file read:");
 		toAFile.print(XMLContent); //since I have it in a string now
 		toAFile.println("-->");
-		
-		fromXML.close();
 		
 		//process the html file
 		String hold="";
@@ -369,6 +414,7 @@ public class StanfordConvertXML
 		while(fromHTML.hasNext())
 		{
 			hold = fromHTML.nextLine();
+			
 			//handling headers (note, in the chapter I have I only found (below h2s) h3s and h4, but better be prepared for h5s and h6s too in case they do come up anywhere.
 			if(hold.matches(hRegex))
 			{
