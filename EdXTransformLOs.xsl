@@ -25,4 +25,10 @@
         <em style="italic"><xsl:apply-templates select="@* | node()"/></em>
     </xsl:template>
     
+    <!--the philanthropy course had a different format for LOs, which was dealt with differently in the java and needs finishing dealing with here-->
+    <xsl:template match="h3[@class='oli_objective']">
+        <xsl:apply-templates/> 
+    </xsl:template>
+    <!--the other thing to deal with there is the empty <p>'s. LEAVING FOR LATER-->
+    
 </xsl:stylesheet>
