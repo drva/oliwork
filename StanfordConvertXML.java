@@ -32,6 +32,10 @@ public class StanfordConvertXML
 	//it turns out there is another format LOs can have (aside from being all in one html in a div), as in the philanthropy course, where they are distributed among html files, one per. Variables for helping handle that (since they're as noted distributed among multiple htmls and can't be handled all one)
 	public static boolean distributedLOsOpen = false;
 	public static int numDistLO = 1;
+	
+	//it turns out some course, for instance the philanthropy course, put more things after a reference section. We can't allow that, so new processing to save it for the end
+	public static String holdReferences = "";
+	public static boolean referencesInHold = false;
 
 	public static void main(String[] args) throws IOException
 	{
@@ -306,11 +310,20 @@ public class StanfordConvertXML
 			if(hold.matches("</"+thisOne+">"))
 			{
 				//close off the workbook page
-					//I now may have closed the body tag earlier if there was a Reference section, so checking for that
+					//this was originally here when References were being handled differently. I am leaving it in case something else comes up where I need to close off body early
 				if(!bodyClosedEarly)
 					toAFile.println("\t</body>");
 				else
 					bodyClosedEarly=false;
+				
+				//it turns out some course, for instance the philanthropy course, put more things after a reference section. We can't allow that, so new processing to save it for the end
+					//this is the end, so here we write it in and clear our variables 
+				if(referencesInHold)
+				{
+					toAFile.println(holdReferences);
+					holdReferences = "";
+					referencesInHold = false;
+				}	
 				toAFile.println("</workbook_page>");
 				
 				continue;
@@ -354,10 +367,24 @@ public class StanfordConvertXML
 		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Licensing\"[\\s\\S]+?")) //contains() doesn't do regex and I want it to catch spacing variations around the =
 			return;
 		//Reference goes in a <bib:file> which goes outside body so checking for that too
+			//it turns out some course, for instance the philanthropy course, put more things after a reference section. We can't allow that, so new processing to save it for the end
 		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"References?\"[\\s\\S]+?"))
 		{
-			toAFile.println("\t</body>");
-			bodyClosedEarly = true;
+			//copy everything we're going to put into the reference section into a string to write into the file later
+			holdReferences += "<!--The .xml file paired with the source html file read:\n"+XMLContent+"\n-->";
+			
+			holdReferences +="\n<section>"; //putting the content in a section bc grouping it is needed for later xslt handing and it already is set up to use section as the group
+			while(fromHTML.hasNext())
+			{
+				holdReferences += "\n"+fromHTML.nextLine();
+			}
+			fromHTML.close();
+			holdReferences +="\n</section>";
+			
+			referencesInHold = true; //flag so we know to write it in later
+			
+System.out.println(holdReferences);
+			return; //exit early since the rest of the method is meant for not-this
 		}
 		//it turns out there is another format LOs can have, as in the philanthropy course, where they are distributed among html files, one per. Handling those
 		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Learning\\s+Objective\"[\\s\\S]+?"))
@@ -385,6 +412,7 @@ public class StanfordConvertXML
 			String hold = "";
 			while(fromHTML.hasNext())
 			{
+				hold = fromHTML.nextLine();
 				toLOFile.println(xmlifyContent(hold));
 			}
 			fromHTML.close();
