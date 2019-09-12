@@ -149,7 +149,8 @@
         </bib:file>
     </xsl:template>
             <!--each work cited should be a bib entry-->
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li" priority="1">
+                <!--there are at least two ways works can be formatted wrt where their ids are. Processing both.--> 
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li[a[@name]]" priority="1"> <!--NEEDS IMPROVEMENT. how do I say first child?-->
         <bib:entry>
             <xsl:attribute name="id"><xsl:value-of select="./a[1]/@name"/></xsl:attribute>
             <!--not currently trying to sort out the pieces/format of the works cited, so they're all misc->note-->
@@ -160,15 +161,28 @@
             </bib:misc>
         </bib:entry>
     </xsl:template>
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li[@id]" priority="1">
+        <bib:entry>
+            <xsl:attribute name="id"><xsl:value-of select="./@id"/></xsl:attribute>
+            <!--not currently trying to sort out the pieces/format of the works cited, so they're all misc->note-->
+            <bib:misc>
+                <bib:note>
+                    <xsl:apply-templates select="@*[name()!='id'] | node()"/>
+                </bib:note>
+            </bib:misc>
+        </bib:entry>
+    </xsl:template>
             <!--handling contents of the works cited li's:
-               -we want to delete span and its contents, since that's the 'return to text above' piece and we don't want it
-               -we want to delete the first a since that was basically just holding the id and we handled it already
+               -we want to delete the Return to text above span and its contents, since that's the 'return to text above' piece and we don't want it
+               -sometimes there's just an a instead of the above span. We still want to get rid of it.
+               -we want to delete the a that held the id in its @name, since that was basically just holding the id and we handled it already. But we can't say first a since only some items have it. Checking for the name attribute the a being empty
                -other a's should have their href content also printed in case the url was not included in text
                -all other descendants we want the bottom-out text of and nothing else
                (the specific ones have higher priority than the general descendent one so they fire when needed)-->
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/span" priority="1"/>
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a[1]" priority="1"/>
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a[position()>1]" priority="1">
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/span[@title='Return to text above']" priority="1"/>
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li//a[@alt='Return to text above']" priority="1"/>
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a[@name and count(*)=0]" priority="1"/>
+    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a" priority=".9">
         <xsl:apply-templates/>
         <xsl:text> [</xsl:text><xsl:value-of select="./@href"/><xsl:text>]</xsl:text>
     </xsl:template>
@@ -223,15 +237,15 @@
     <xsl:template match="section[not(h1) and not(h2) and not(h3) and not(h4) and not(h5) and not(h6)]">
         <xsl:apply-templates select="@* | node()"/> 
     </xsl:template>
-    <!--badly nested lists-->
-    <xsl:template match="ul/ul | ol/ul">
+    <!--badly nested lists--> <!--priority added so it takes priority over just processing the item (specifically at the moment the template that strips attributes)-->
+    <xsl:template match="ul/ul | ol/ul" priority = "1">
         <li>
             <ul>
                 <xsl:apply-templates/> <!--later will need to change to  select="@* | node()" and handle attributes-->
             </ul>
         </li>
     </xsl:template>
-    <xsl:template match="ul/ol | ol/ol">
+    <xsl:template match="ul/ol | ol/ol" priority = "1">
         <li>
             <ol>
                 <xsl:apply-templates/> <!--later will need to change to  select="@* | node()" and handle attributes-->
@@ -305,4 +319,17 @@
 <!--Some further quickpass things - TO HANDLE BETTER LATER (from trying to process chapter course structure)-->
     <!--we do not allow empty tr's-->
     <xsl:template match="tr[not(th) and not(td)]"/>
+    
+<!--Some further quickpass things - TO HANDLE BETTER LATER (from trying to process chapter introduction)-->
+    <!--a bunch of stuff is inside an article tag. Need to figure out later if that's doing anything-->
+    <xsl:template match="article">
+            <xsl:apply-templates select="@* | node()"/>
+    </xsl:template>
+    <!--we don't have buttons I think-->
+    <xsl:template match="button">
+        <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
+        <button>
+            <xsl:apply-templates select="@* | node()"/>   
+        </button>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+    </xsl:template>
 </xsl:stylesheet>
