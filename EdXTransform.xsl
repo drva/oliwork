@@ -139,6 +139,7 @@
             <xsl:apply-templates select="@* | node()"/>
         </link>
     </xsl:template>-->
+    <!--later: potentially what was wrong here is that to put just text in an attibute you don't use xsl:text, you just write it in? See notes.-->
     
     <!--bibliography-->
         <!--the bottom-of-page part-->
@@ -195,7 +196,22 @@
             <xsl:attribute name="entry"><xsl:value-of select="substring(./span/a/@href,2)"/></xsl:attribute> <!--need to strip out the #-->
             <xsl:attribute name="title"><xsl:value-of select="./span/@title"/></xsl:attribute> <!--keeping it since it's there and helps accessibility-->
         </cite>
-    </xsl:template>    
+    </xsl:template>  
+    
+    <!--not fully complete (though more than quickpass)-->
+    <xsl:template match="audio">
+        <audio>
+            <xsl:attribute name="src">
+                <xsl:value-of select="concat('..',replace(./@src,'static','webcontent'))"/>
+            </xsl:attribute>
+<!--TO HANDLE BETTER LATER atm this just assumes all audio is in mp3 format, which is clearly incorrect and it should properly check them. (However, need to know what to do if I find a none of the above).-->
+            <xsl:attribute name="type">audio/mp3</xsl:attribute>
+            <!--their controls element looks like it could be fairly simply turned into ours, but since ours is optional I am postponing this for the moment-->
+            <caption>
+                <xsl:apply-templates/> <!--in the philanthropy course, the audio elements tend to contain text saying "Your browser does not support the audio element.". We don't allow text directly in an audio element, so I need to pick an allowed element to put it in. I have picked caption out of the options, even though it doesn't actually seem to make sense for the text in question, because I'm unsure what might be better-->
+            </caption>
+        </audio>
+    </xsl:template>
     
 <!--Some quickpass things - TO ACTUALLY HANDLE LATER-->
     <xsl:template match="*[local-name()='math']"> <!--handling namespace problem: https://stackoverflow.com/questions/5239685/xml-namespace-breaking-my-xpath-->
@@ -331,5 +347,24 @@
         <button>
             <xsl:apply-templates select="@* | node()"/>   
         </button>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+    </xsl:template>
+    
+<!--Some further quickpass things - TO HANDLE BETTER LATER (from trying to philanthropy course)-->
+    <!--having a problem with ending up with 'bare' activity links inside body. (I checked and I think it'd also be a problem in a section body, so I can have 'in section' as a condition (since that would get turned into 'in section body' in the output), which is good bc it ends up in body from being in a headerless section so body/ wouldn't catch it))-->
+    <!--this is literally the code that I have for making activity links copied over. There's probably a better way to do this that is less redundant-->
+    <xsl:template match="body/a[matches(@href,'/jump_to_id/[a-z0-9]+')] | section/a[matches(@href,'/jump_to_id/[a-z0-9]+')]" priority="1">
+        <xsl:variable name="pagetarget" select="tokenize(./@href,'/')[last()]"/>
+        <xsl:variable name="olipageid" select="document($pagestable)/pages/page[@filename=$pagetarget]/id/@pageid"/> <!--in a variable since I'll use it twice-->
+        <p>
+            <activity_link>
+                <xsl:attribute name="idref">
+                    <xsl:value-of select="$olipageid"/>
+                </xsl:attribute>
+                <xsl:attribute name="title"> <!--for accessibility-->
+                    <xsl:value-of select="$olipageid"/>
+                </xsl:attribute>
+                <xsl:apply-templates select="@*[name()!='href' and name()!='title'] | node()"/> <!--the internal links I saw didn't have titles but in case some do-->
+            </activity_link>
+        </p>
     </xsl:template>
 </xsl:stylesheet>
