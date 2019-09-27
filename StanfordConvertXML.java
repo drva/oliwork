@@ -287,7 +287,7 @@ public class StanfordConvertXML
 					//{now handled in the xslt} so there's a problem where learning objective stuff goes in the head and I don't have those yet to put there. Will handle that later.
 				
 				//logging to the file of name-file correspondences
-				String filenum = filename.split("[./]")[2]; //I only want the number id not the rest of the file address
+				String filenum = filename.split("[./]")[filename.split("[./]").length-2]; //I only want the number id not the rest of the file address
 				lookupTable.println("<page filename=\""+filenum+"\"><id pageid=\""+pageID+"\"/></page>");
 				
 				continue;
@@ -364,8 +364,14 @@ public class StanfordConvertXML
 		}
 		fromXML.close();
 		//I don't want to copy in the licensings so I check if this is one of those and if it is I don't copy it in
-		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Licensing\"[\\s\\S]+?")) //contains() doesn't do regex and I want it to catch spacing variations around the =
+			//Having expanded titles it will notice as such to include 'License' makes it more likely it will catch an actual section that's simply called that. For this reason and in general, it will now mark places where it left out a license section
+		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"(Licensing|License)\"[\\s\\S]+?")) //contains() doesn't do regex and I want it to catch spacing variations around the =
+		{	
+			toAFile.print("<!--A License section was here:");
+			toAFile.print(XMLContent);
+			toAFile.println("-->");
 			return;
+		}
 		//Reference goes in a <bib:file> which goes outside body so checking for that too
 			//it turns out some course, for instance the philanthropy course, put more things after a reference section. We can't allow that, so new processing to save it for the end
 		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"References?\"[\\s\\S]+?"))
@@ -383,7 +389,6 @@ public class StanfordConvertXML
 			
 			referencesInHold = true; //flag so we know to write it in later
 			
-System.out.println(holdReferences);
 			return; //exit early since the rest of the method is meant for not-this
 		}
 		//it turns out there is another format LOs can have, as in the philanthropy course, where they are distributed among html files, one per. Handling those
