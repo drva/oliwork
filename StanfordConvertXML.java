@@ -433,9 +433,9 @@ public class StanfordConvertXML
 		//process the html file
 		String hold="";
 		
-		String hRegex = "(?<pre>[\\s\\S]*?)(?<header><h(?<num>[3-6])>)(?<post>[\\s\\S]*)"; //lines with headers
+		String hRegex = "(?<pre>[\\s\\S]*?)(?<header><h(?<num>[1-6])(?<attributes>[\\s\\S]*?)>)(?<post>[\\s\\S]*)"; //lines with headers (I'd originally only run into 3 and up inside html files, but in philanthropy encountered h2's inside html files as well, so modifying)
 		boolean openSubsection = false;
-		int[] openSubsectionLevels = new int[7]; //for legibility ease, openSubsectionLevels[5] represents h5 and so on (and [0-2] just get ignored since they either don't exist or are dealt with in other ways).
+		int[] openSubsectionLevels = new int[7]; //for legibility ease, openSubsectionLevels[5] represents h5 and so on (and [0-2] just get ignored since they either don't exist or are dealt with in other ways). (modification: h2 may be dealt with here too now (and h1 just in case))
 		
 		String loHeadRegex = "[\\s\\S]*?<h2[\\s\\S]*?>Learning Objectives?</h2>[\\s\\S]*"; //finding learning objective sections
 		boolean expectLOs = false;
@@ -449,7 +449,7 @@ public class StanfordConvertXML
 			hold = fromHTML.nextLine();
 			
 			//handling headers (note, in the chapter I have I only found (below h2s) h3s and h4, but better be prepared for h5s and h6s too in case they do come up anywhere.
-			if(hold.matches(hRegex))
+			if(hold.matches(hRegex) && !hold.matches(loHeadRegex)) //since hRegex now looks for h2s as well, and the lo header is an h2, excluding it
 			{
 				pattern = Pattern.compile(hRegex);
 				matcher = pattern.matcher(hold);
@@ -510,7 +510,7 @@ public class StanfordConvertXML
 		//so I'm translating headers into sections, but sections need closing tags, so I need to put those in at the right times. The right times are 'I hit a new header of equal or higher level' (where 3 is higher level than 4 etc) or 'end of file' (this).
 		if(openSubsection)
 		{
-			closeSubsections(3, openSubsectionLevels); //end of file means close any sections I have open, and h3 is the highest level I handle in this way
+			closeSubsections(1, openSubsectionLevels); //end of file means close any sections I have open, and h3 is the highest level I handle in this way (modification: now potentially h2s, which I've seen, and h1, in case, might be handled this way)
 			openSubsection=false;
 		}
 		toAFile.println("\t\t</section>");
