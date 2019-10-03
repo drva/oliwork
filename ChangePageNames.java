@@ -7,12 +7,14 @@ import java.util.regex.Matcher;
 
 public class ChangePageNames
 {
-	public static void main(String[] args)
+	public static String destinationDirectory = "namechangedconvertedpages";
+	
+	public static void main(String[] args) throws IOException
 	{
 		File[] directoryList = new File(args[0]).listFiles(); //https://stackoverflow.com/questions/4917326/how-to-iterate-over-the-files-of-a-certain-directory-in-java
 		for(int i=0; i<directoryList.length; i++)
 		{
-			System.out.println(removeVowelsNotFirst(directoryList[i].getName()).length());
+			makeNameChangedFile(directoryList[i]);
 		}
 	}
 	
@@ -29,5 +31,20 @@ public class ChangePageNames
 				fixed=fixed+hold;
 		}
 		return fixed;
+	}
+	
+	public static void makeNameChangedFile(File inputFile) throws IOException
+	{
+		String newFilename = removeVowelsNotFirst(inputFile.getName());
+		PrintWriter toAFile = new PrintWriter(new File(destinationDirectory+"/"+newFilename)); //do I need to add .xml? No, already there
+		
+		Scanner fromAFile = new Scanner(inputFile);
+		while(fromAFile.hasNext())
+		{
+			toAFile.println(fromAFile.nextLine());
+		}
+		
+		fromAFile.close();
+		toAFile.close();
 	}
 }
