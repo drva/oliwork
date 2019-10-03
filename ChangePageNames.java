@@ -40,13 +40,14 @@ public class ChangePageNames
 		PrintWriter toAFile = new PrintWriter(new File(destinationDirectory+"/"+newFilename)); //do I need to add .xml? No, already there
 		
 		String hasFilenameRegex = "(?<pre>[\\s\\S]*?\")(?<filename>u-\\S+?m-\\S+?p-\\S+?)(?<post>\"[\\s\\S]*)"; 
-		
+		String LORegex = "(?<pre>[\\s\\S]*?\")(?<filename>u-\\S+?m-\\S+?p-\\S+?)(?<islo>LO_[0-9]+)(?<post>\"[\\s\\S]*)"; 
+
 		Scanner fromAFile = new Scanner(inputFile);
 		String hold="";
 		while(fromAFile.hasNext())
 		{
 			hold=fromAFile.nextLine();
-			if(hold.matches(hasFilenameRegex))
+			if(hold.matches(hasFilenameRegex) && !hold.matches(LORegex)) //not currently adjusting LO filenames, so excluding them
 			{
 				System.out.println(hold); //help me look out for it catching incorrect things
 				
