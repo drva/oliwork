@@ -33,15 +33,31 @@ public class ChangePageNames
 		return fixed;
 	}
 	
+	//changes the name of the file to the new version. Looks through file for more filenames and changes those too
 	public static void makeNameChangedFile(File inputFile) throws IOException
-	{
+	{		
 		String newFilename = removeVowelsNotFirst(inputFile.getName());
 		PrintWriter toAFile = new PrintWriter(new File(destinationDirectory+"/"+newFilename)); //do I need to add .xml? No, already there
 		
+		String hasFilenameRegex = "(?<pre>[\\s\\S]*?\")(?<filename>u-\\S+?m-\\S+?p-\\S+?)(?<post>\"[\\s\\S]*)"; 
+		
 		Scanner fromAFile = new Scanner(inputFile);
+		String hold="";
 		while(fromAFile.hasNext())
 		{
-			toAFile.println(fromAFile.nextLine());
+			hold=fromAFile.nextLine();
+			if(hold.matches(hasFilenameRegex))
+			{
+				System.out.println(hold); //help me look out for it catching incorrect things
+				
+				Pattern pattern = Pattern.compile(hasFilenameRegex);
+				Matcher matcher = pattern.matcher(hold);
+				matcher.matches();
+				
+				toAFile.println(matcher.group("pre")+removeVowelsNotFirst(matcher.group("filename"))+matcher.group("post"));
+			}
+			else
+				toAFile.println(hold);
 		}
 		
 		fromAFile.close();
