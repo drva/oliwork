@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 
 public class ChangePageNames
 {
-	public static String destinationDirectory = "namechangedconvertedpages";
+	public static String destinationDirectory = "namechangedAgainconvertedpages";
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -36,7 +36,7 @@ public class ChangePageNames
 	//changes the name of the file to the new version. Looks through file for more filenames and changes those too
 	public static void makeNameChangedFile(File inputFile) throws IOException
 	{		
-		String newFilename = removeVowelsNotFirst(inputFile.getName());
+		String newFilename = removeVowelsNotFirst(truncateUnitsModules(inputFile.getName()));
 		PrintWriter toAFile = new PrintWriter(new File(destinationDirectory+"/"+newFilename)); //do I need to add .xml? No, already there
 		
 		String hasFilenameRegex = "(?<pre>[\\s\\S]*?\")(?<filename>u-\\S+?m-\\S+?p-\\S+?)(?<post>\"[\\s\\S]*)"; 
@@ -55,7 +55,7 @@ public class ChangePageNames
 				Matcher matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				toAFile.println(matcher.group("pre")+removeVowelsNotFirst(matcher.group("filename"))+matcher.group("post"));
+				toAFile.println(matcher.group("pre")+removeVowelsNotFirst(truncateUnitsModules(matcher.group("filename")))+matcher.group("post"));
 			}
 			else
 				toAFile.println(hold);
@@ -63,5 +63,23 @@ public class ChangePageNames
 		
 		fromAFile.close();
 		toAFile.close();
+	}
+	
+	//taking a filename made out of u-[unitname]_m-[modulename]_p-[pagename], truncates the former two to their first 'word'
+	public static String truncateUnitsModules(String toFix)
+	{
+		String nameRegex = "u-(?<unitname>\\S+?)-m-(?<modulename>\\S+?)(?<pagesection>-p-\\S+)";
+		Pattern pattern = Pattern.compile(nameRegex);
+		Matcher matcher = pattern.matcher(toFix);
+		Boolean doMatch = matcher.matches();
+		
+		if(!doMatch) //if the string given isn't in the right for, just give it back.
+			return toFix;
+		
+		String truncatedUnitName = matcher.group("unitname").split("_")[0]; //note, these will produce an undesirable effect if the unitname/modulename currently starts with an underscore for some reason. 
+		String truncatedModuleName = matcher.group("modulename").split("_")[0];
+		
+		//note I am currently *not* checking if this causes uniqueness problems or doing anything about this
+		return "u-"+truncatedUnitName+"-m-"+truncatedModuleName+matcher.group("pagesection");
 	}
 }
