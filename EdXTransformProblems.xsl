@@ -32,9 +32,23 @@
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
                     <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
-                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::optionresponse or self::choiceresponse or self::numericalresponse or self::solution)]"/>
+                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::numericalresponse or self::solution)]"/>
                 </body>
-                <xsl:apply-templates select ="multiplechoiceresponse|optionresponse|choiceresponse|numericalresponse|solution"/>
+                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|numericalresponse|solution"/>
+            </question>    
+        </assessment>
+    </xsl:template>
+    <xsl:template match="problem[//optionresponse]"> <!--being treated seperately because it is put together differently-->
+        <assessment>
+            <xsl:attribute name="id"><xsl:value-of select="concat('a_',$filename)"/></xsl:attribute>
+            <title>tutor</title> <!--if I understand and remember correctly, this element is necessary but not displayed-->
+            <question>
+                <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
+                <body>
+                    <xsl:apply-templates/>
+                </body>
+                <xsl:apply-templates select ="optionresponse" mode="choices"/>
+                <xsl:apply-templates select ="optionresponse" mode="feedback"/>
             </question>    
         </assessment>
     </xsl:template>
@@ -66,7 +80,18 @@
     </xsl:template>
     <!--NOTE, p should currently be handled by the identity transformation, if I get rid of that I'll need a replacement-->
     
-    <!--Problem types-->
+    <!--for problems that have feedback in python. Note: this will end up in body due to how I structures the above, but that should be fine since it'll be gotten rid of ultimately anyway-->
+    <xsl:template match="script"> <!--currently just putting in comments-->
+        <xsl:text disable-output-escaping="yes">
+            &lt;!--</xsl:text>
+        <script>
+            <xsl:apply-templates select="@* | node()"/>   
+        </script>--<xsl:text disable-output-escaping="yes">&gt;
+        </xsl:text> 
+    </xsl:template>
+    
+<!--Problem types-->
+    <!--mutiple choice-->
     <xsl:template match="multiplechoiceresponse">
         <xsl:apply-templates/> <!--just sending it through to be dealt with in the next one-->
     </xsl:template>
@@ -85,21 +110,64 @@
         <choice value="{./count(preceding-sibling::*)}"><xsl:apply-templates select="(text() | *[not(self::choicehint)])"/></choice> <!--choicehint goes in feedback, not here-->
     </xsl:template>
     
-    <!--handling correct and incorrect answers-->
-    <xsl:template match="choice[@correct='true']" mode="feedback">
+    <!--handling correct and incorrect answers--> <!--since multiple select also has choice tags but the feedback needs to work differently, specifying this is for multiple choice only-->
+    <xsl:template match="multiplechoiceresponse/choicegroup/choice[@correct='true']" mode="feedback">
         <response match="{./count(preceding-sibling::*)}" score="{$points}">
-            <xsl:apply-templates select="choicehint"/>
+            <feedback>
+                <xsl:apply-templates select="choicehint"/>
+            </feedback>
         </response>
     </xsl:template>
-    <xsl:template match="choice[@correct='false']" mode="feedback">
+    <xsl:template match="multiplechoiceresponse/choicegroup/choice[@correct='false']" mode="feedback">
         <response match="{./count(preceding-sibling::*)}" score="0">
-            <xsl:apply-templates select="choicehint"/>
+            <feedback>
+                <xsl:apply-templates select="choicehint"/>
+            </feedback>
         </response>
     </xsl:template>
     
-    <xsl:template match="choicehint">
-        <feedback>
+    <xsl:template match="choicehint">       
+            <xsl:apply-templates/>     
+    </xsl:template>
+    
+    <xsl:template match="optionresponse"> <!--this is the one in body, so it just has the input_ref--> <!--I am ignoring the label attribute atm (it is sometimes used clearly unintentionally)-->
+        <input_ref input="{concat('input',./count(preceding::optionresponse))}"/> <!--numbering for ids-->
+    </xsl:template>
+    
+    <!--multiple select-->
+        <!--note: the list of choices here works the same as in multiple choice and can be handled by the same template (above). Feedback, however, works differently, and needs its own handling-->
+    <xsl:template match="choiceresponse">
+        <xsl:apply-templates/> <!--just sending it through to be dealt with in the next one-->
+    </xsl:template>
+    <xsl:template match="choiceresponse/checkboxgroup"> <!--at the moment it looks like these always come together like this. Also checkboxgroup can have a label attribute and a direction attribute (in course design they seem to tend to say 'x' and 'vertical') but they don't look to be doing anything? If either of these are false will need to change.-->
+        <multiple_choice select="multiple" shuffle="false"> <!--it doesn't look like they have shuffle-->
             <xsl:apply-templates/>
-        </feedback>
+        </multiple_choice>
+        <!--edX has the problems and the feedback together, but we don't, so need to seperate them out-->
+            <!--the minimum needed for multiple select feedback is 'selecting all and only the answers that should be selected is correct; everything else is wrong'-->
+        <xsl:variable name="correctmatch" select="string-join((choice[@correct='true']/string(count(preceding-sibling::*))), ',')"/> <!--preceding siblings is again used to number and this identify the choices-->
+        <part>
+            <response  match="{$correctmatch}" score="1">              
+                <feedback>
+                    Correct.
+                </feedback>
+            </response>
+            <response match="*"  score="0">
+                <feedback>
+                    Incorrect.
+                </feedback>
+            </response>
+        </part>
+    </xsl:template>
+    
+<!--hints-->
+    <!--At least some feedback-in-python files have these. They can go with a hint in the python, according to the docs, but there are files with this but no actual hint.
+    Not getting completely rid of it atm in case some files *do* have hints, so currently commenting out.-->       
+    <xsl:template match="hintgroup[@hintfn='hint_fn']"> 
+        <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
+        <hintgroup>
+            <xsl:apply-templates select="@* | node()"/>   
+        </hintgroup>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+        <!--I feel like there should be a way to do this that doesn't involve retyping the tag, but don't know what it is-->
     </xsl:template>
 </xsl:stylesheet>
