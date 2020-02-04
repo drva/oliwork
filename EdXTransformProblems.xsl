@@ -5,8 +5,8 @@
     version="2.0">
     <xsl:output
         method="xml" 
-        doctype-public="-//Carnegie Mellon University//DTD Inline Assessment 1.3//EN"
-        doctype-system="http://oli.web.cmu.edu/dtd/oli_inline_assessment_1_3.dtd"
+        doctype-public="-//Carnegie Mellon University//DTD Inline Assessment 1.4//EN"
+        doctype-system="http://oli.web.cmu.edu/dtd/oli_inline_assessment_1_4.dtd"
         indent="yes"/>
     
     <!--I want to use the existing filename for the id-->
@@ -15,7 +15,7 @@
     
     <!--basic value of how many points to give for correct answers-->
     <xsl:variable name="points" select="1"/>
-    
+   
     <!--I don't want to miss anything, so adding the identity transformation to by default copy everything
         (and be overidden by more specific templates for things that need different handling)-->
     <xsl:template match="@* | node()">
@@ -25,6 +25,7 @@
     </xsl:template>
     
     <xsl:template match="problem"> <!--Currently not handling any of the attributes of problem-->
+        <xsl:result-document href="{concat('a_',$filename, '.xml')}"> <!--https://www.oxygenxml.com/forum/topic7987.html-->
         <assessment>
             <xsl:attribute name="id"><xsl:value-of select="concat('a_',$filename)"/></xsl:attribute>
             <title>tutor</title> <!--if I understand and remember correctly, this element is necessary but not displayed-->
@@ -37,8 +38,10 @@
                 <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|numericalresponse|solution"/>
             </question>    
         </assessment>
+        </xsl:result-document>
     </xsl:template>
     <xsl:template match="problem[//optionresponse]"> <!--being treated seperately because it is put together differently-->
+        <xsl:result-document href="{concat('a_',$filename, '.xml')}">
         <assessment>
             <xsl:attribute name="id"><xsl:value-of select="concat('a_',$filename)"/></xsl:attribute>
             <title>tutor</title> <!--if I understand and remember correctly, this element is necessary but not displayed-->
@@ -51,7 +54,35 @@
                 <xsl:apply-templates select ="optionresponse" mode="feedback"/>
             </question>    
         </assessment>
+        </xsl:result-document>
     </xsl:template>
+    
+    <xsl:template match="submit_and_compare"> <!--Currently not handling any of the other attributes  here-->
+        <assessment>
+            <xsl:attribute name="id"><xsl:value-of select="concat('a_',./@url_name)"/></xsl:attribute>
+            <title>tutor</title> <!--if I understand and remember correctly, this element is necessary but not displayed-->
+            <question>
+                <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', ./@url_name)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
+                <xsl:apply-templates select="*[not(self::demandhint)]"/> <!--their hints are after their explanation section directly in the root and ours are inside our part element, so need to get them in the right place-->
+            </question>    
+        </assessment>
+    </xsl:template>
+    <!--body is currently being handled by the identity transformation-->
+    <xsl:template match="explanation">
+        <short_answer id="answer" case_sensitive="false" /> <!--not sure if the id/input thing is required (looking at Diana's course) but putting it in in case-->
+        <part>
+            <response match="*" input="answer" score="1">
+                <feedback>
+                    <xsl:apply-templates/>
+                </feedback>
+            </response>
+            <xsl:apply-templates select="//demandhint"/>
+        </part>
+    </xsl:template>
+    <xsl:template match="demandhint">
+        <xsl:apply-templates/>
+    </xsl:template>
+    <!--hint is currently being handled by the identity transformation-->
     
 <!--various problem text elements--> 
     <!--CHECK Do we have a way to do a title?-->
