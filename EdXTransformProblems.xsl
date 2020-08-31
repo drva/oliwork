@@ -33,7 +33,8 @@
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
                     <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
-                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::numericalresponse or self::solution)]"/>
+                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
+                    <xsl:apply-templates select = "multiplechoiceresponse/label"/> <!--some kth problems have problem body like this-->
                 </body>
                 <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|numericalresponse|solution"/>
             </question>    
@@ -124,7 +125,7 @@
 <!--Problem types-->
     <!--mutiple choice-->
     <xsl:template match="multiplechoiceresponse">
-        <xsl:apply-templates/> <!--just sending it through to be dealt with in the next one-->
+        <xsl:apply-templates select="*[not(self::label)]"/> <!--just sending it through to be dealt with in the next one--> <!--excluding label, from kth, since contents of that go in body-->
     </xsl:template>
     <xsl:template match="multiplechoiceresponse/choicegroup"> <!--at the moment it looks like these always come together like this. Also choicegroup can have a type attribute (its value tends to be MultipleChoice) but it doesn't look to be doing anything? If either of these are false will need to change.-->
         <multiple_choice shuffle="false"> <!--it doesn't look like they have shuffle-->
@@ -132,7 +133,8 @@
         </multiple_choice>
         <!--edX has the problems and the feedback together, but we don't, so need to seperate them out-->
         <part>
-            <xsl:apply-templates select="choice" mode="feedback"/>
+            <xsl:apply-templates select="choice" mode="feedback"/>       
+            <xsl:apply-templates select="//demandhint"/> <!--kth has hints in mcs-->
         </part>
     </xsl:template>
     
@@ -143,16 +145,25 @@
     
     <!--handling correct and incorrect answers--> <!--since multiple select also has choice tags but the feedback needs to work differently, specifying this is for multiple choice only-->
     <xsl:template match="multiplechoiceresponse/choicegroup/choice[@correct='true']" mode="feedback">
-        <response match="{./count(preceding-sibling::*)}" score="{$points}">
+        <xsl:variable name="choiceid" select="./count(preceding-sibling::*)"/>
+        <response match="{$choiceid}" score="{$points}">
             <feedback>
+                <!--Philanthropy has feedback in choicehint elements, while Course Design has it in Python scripts-->
                 <xsl:apply-templates select="choicehint"/>
+                <xsl:apply-templates select="//script" mode="mcfeedback">
+                    <xsl:with-param name="choiceidparam" select="$choiceid"/> <!--will need to know which choice's feedback I want-->
+                </xsl:apply-templates>
             </feedback>
         </response>
     </xsl:template>
     <xsl:template match="multiplechoiceresponse/choicegroup/choice[@correct='false']" mode="feedback">
-        <response match="{./count(preceding-sibling::*)}" score="0">
+        <xsl:variable name="choiceid" select="./count(preceding-sibling::*)"/>
+        <response match="{$choiceid}" score="0">
             <feedback>
                 <xsl:apply-templates select="choicehint"/>
+                <xsl:apply-templates select="//script" mode="mcfeedback">
+                    <xsl:with-param name="choiceidparam" select="$choiceid"/>
+                </xsl:apply-templates>
             </feedback>
         </response>
     </xsl:template>
@@ -160,6 +171,23 @@
     <xsl:template match="choicehint">       
             <xsl:apply-templates/>     
     </xsl:template>
+    
+    <!--using regular expressions to pull feedback out of the python scripts. Differs for multiple choice and multiple select-->
+    <xsl:template match="script" mode="mcfeedback">
+        <xsl:param name="choiceidparam"/>
+        <xsl:analyze-string select="."
+            regex="[\s\S]*?{$choiceidparam}'\s+in\s+ans:\s*feedback\s*=\s*'([\s\S]+?)'[\s\S]*">
+            <!--see for example
+            elif 'choice_1' in ans:
+                feedback = 'Not quite right.-->
+    
+            <xsl:matching-substring>
+                <xsl:value-of select="regex-group(1)"/>
+            </xsl:matching-substring>
+            <xsl:non-matching-substring/> <!--I'm not sure if I need this in here to say that if it doesn't find a match it shouldn't output anything?-->
+        </xsl:analyze-string> <!--https://www.xml.com/pub/a/2003/06/04/tr.html-->
+    </xsl:template>
+    
     
     <xsl:template match="optionresponse"> <!--this is the one in body, so it just has the input_ref--> <!--I am ignoring the label attribute atm (it is sometimes used clearly unintentionally)-->
         <input_ref input="{concat('input',./count(preceding::optionresponse))}"/> <!--numbering for ids-->
@@ -200,5 +228,14 @@
             <xsl:apply-templates select="@* | node()"/>   
         </hintgroup>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
         <!--I feel like there should be a way to do this that doesn't involve retyping the tag, but don't know what it is-->
+    </xsl:template>
+    
+ <!--for KTH-->
+    <xsl:template match="label">
+        <p><xsl:apply-templates/></p>
+    </xsl:template>
+    
+    <xsl:template match="pre">
+        <code><xsl:apply-templates/></code>
     </xsl:template>
 </xsl:stylesheet>
