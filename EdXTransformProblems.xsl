@@ -33,10 +33,10 @@
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
                     <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
-                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
+                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
                     <xsl:apply-templates select = "multiplechoiceresponse/label"/> <!--some kth problems have problem body like this-->
                 </body>
-                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|numericalresponse|solution"/>
+                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|solution"/>
             </question>    
         </assessment>
         </xsl:result-document>
@@ -217,6 +217,30 @@
                 </feedback>
             </response>
         </part>
+    </xsl:template>
+    
+    <!--string response (looking at kth)-->
+    <xsl:template match="stringresponse">
+        <text name="field"  size="medium" whitespace="trim" case_sensitive="false"/> <!--making these the same for all atm-->
+        <part>
+            <response score="1">
+                <xsl:attribute name="match">
+                    <xsl:value-of select="./@answer"/>
+                </xsl:attribute>
+                <feedback>
+                    <xsl:apply-templates select="correcthint"/>
+                </feedback>
+            </response>
+            <response match="*">
+                <feedback>
+                    Try Again.
+                </feedback>
+            </response>
+            <xsl:apply-templates select="//demandhint"/>
+        </part>
+    </xsl:template>
+    <xsl:template match="correcthint">
+        <xsl:apply-templates/>
     </xsl:template>
     
 <!--hints-->
