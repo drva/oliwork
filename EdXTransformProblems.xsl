@@ -200,12 +200,15 @@
     </xsl:template>
     <xsl:template match="choiceresponse/checkboxgroup"> <!--at the moment it looks like these always come together like this. Also checkboxgroup can have a label attribute and a direction attribute (in course design they seem to tend to say 'x' and 'vertical') but they don't look to be doing anything? If either of these are false will need to change.-->
         <multiple_choice select="multiple" shuffle="false"> <!--it doesn't look like they have shuffle-->
-            <xsl:apply-templates/>
+            <xsl:apply-templates select="*[not(self::compoundhint)]"/> <!--compoundhint, seen in kth, goes with feedback-->
         </multiple_choice>
         <!--edX has the problems and the feedback together, but we don't, so need to seperate them out-->
             <!--the minimum needed for multiple select feedback is 'selecting all and only the answers that should be selected is correct; everything else is wrong'-->
         <xsl:variable name="correctmatch" select="string-join((choice[@correct='true']/string(count(preceding-sibling::*))), ',')"/> <!--preceding siblings is again used to number and this identify the choices-->
         <part>
+            <xsl:apply-templates select="choice" mode="feedback"/>
+            <xsl:apply-templates select="compoundhint"/>
+            <!--^based on kth-->
             <response  match="{$correctmatch}" score="1">              
                 <feedback>
                     Correct.
@@ -217,6 +220,21 @@
                 </feedback>
             </response>
         </part>
+    </xsl:template>
+    <xsl:template match="choiceresponse/checkboxgroup/choice" mode="feedback">
+        <xsl:variable name="choiceid" select="./count(preceding-sibling::*)"/>
+        <response match="{$choiceid}" score="0">
+            <feedback>
+                <xsl:apply-templates select="choicehint"/>
+            </feedback>
+        </response>
+    </xsl:template>
+    <xsl:template match="compoundhint"> <!--note: atm this is set up to need handfinishing after, bc it's not changing the choice ids here to ours, and it's not marking the correct answer (but the basic 'this is the correct answer' will end up in the file so it can be combined by hand with the proper feedback)-->
+        <response  match="{@value}" score="0">              
+            <feedback>
+                <xsl:apply-templates/>
+            </feedback>
+        </response>
     </xsl:template>
     
     <!--string response (looking at kth)-->
@@ -231,6 +249,8 @@
                     <xsl:apply-templates select="correcthint"/>
                 </feedback>
             </response>
+            <xsl:apply-templates select="additional_answer"/> <!--I *think* these are other correct answers?-->
+            <xsl:apply-templates select="stringequalhint"/> <!--these seem to be specific wrong answers-->
             <response match="*">
                 <feedback>
                     Try Again.
@@ -241,6 +261,26 @@
     </xsl:template>
     <xsl:template match="correcthint">
         <xsl:apply-templates/>
+    </xsl:template>
+    <xsl:template match="additional_answer">
+        <response score="1">
+            <xsl:attribute name="match">
+                <xsl:value-of select="./@answer"/>
+            </xsl:attribute>
+            <feedback>
+                <xsl:apply-templates/>
+            </feedback>
+        </response>
+    </xsl:template>
+    <xsl:template match="stringequalhint">
+        <response score="0">
+            <xsl:attribute name="match">
+                <xsl:value-of select="./@answer"/>
+            </xsl:attribute>
+            <feedback>
+                <xsl:apply-templates/>
+            </feedback>
+        </response>
     </xsl:template>
     
 <!--hints-->
