@@ -28,7 +28,16 @@
         <xsl:result-document href="{concat('a_',$filename, '.xml')}"> <!--https://www.oxygenxml.com/forum/topic7987.html-->
         <assessment>
             <xsl:attribute name="id"><xsl:value-of select="concat('a_',$filename)"/></xsl:attribute>
-            <title>tutor</title> <!--if I understand and remember correctly, this element is necessary but not displayed-->
+            <title> <!--if I understand and remember correctly, this element is necessary but not displayed. However, KTH#2 has some content-bearing display names for problems, which I'd like to put somewhere, and it turns out title is displayed in echo editing so allowing for different ones could be beneficial.-->
+                <xsl:choose>
+                    <xsl:when test="./@display_name">
+                        <xsl:value-of select="./@display_name"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:text>tutor</xsl:text>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </title> 
             <question>
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
@@ -45,7 +54,16 @@
         <xsl:result-document href="{concat('a_',$filename, '.xml')}">
         <assessment>
             <xsl:attribute name="id"><xsl:value-of select="concat('a_',$filename)"/></xsl:attribute>
-            <title>tutor</title> <!--if I understand and remember correctly, this element is necessary but not displayed-->
+            <title> <!--if I understand and remember correctly, this element is necessary but not displayed. However, KTH#2 has some content-bearing display names for problems, which I'd like to put somewhere, and it turns out title is displayed in echo editing so allowing for different ones could be beneficial.-->
+                <xsl:choose>
+                    <xsl:when test="./@display_name">
+                        <xsl:value-of select="./@display_name"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:text>tutor</xsl:text>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </title> 
             <question>
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
@@ -315,5 +333,9 @@
         <codeblock syntax="text">
             <xsl:apply-templates/>
         </codeblock>
+    </xsl:template>
+    
+    <xsl:template match="description">
+        <p><xsl:apply-templates/></p>
     </xsl:template>
 </xsl:stylesheet>
