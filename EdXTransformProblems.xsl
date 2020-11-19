@@ -243,7 +243,14 @@
         <part>
             <response score="1">
                 <xsl:attribute name="match">
-                    <xsl:value-of select="./@answer"/>
+                    <xsl:choose>
+                        <xsl:when test="contains(@type,'regexp')">
+                            <xsl:value-of select="concat('/',@answer,'/')"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="./@answer"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:attribute>
                 <feedback>
                     <xsl:apply-templates select="correcthint"/>
@@ -301,5 +308,12 @@
     
     <xsl:template match="pre">
         <code><xsl:apply-templates/></code>
+    </xsl:template>
+ 
+<!--for KTH#2-->
+    <xsl:template match="pre/code">
+        <codeblock syntax="text">
+            <xsl:apply-templates/>
+        </codeblock>
     </xsl:template>
 </xsl:stylesheet>
