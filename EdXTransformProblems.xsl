@@ -43,7 +43,13 @@
                 <body>
                     <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
                     <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
-                    <xsl:apply-templates select = "multiplechoiceresponse/label"/> <!--some kth problems have problem body like this-->
+                    
+                    <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
+                    <xsl:apply-templates select="multiplechoiceresponse/*[not(self::choicegroup)]"/>
+                    <xsl:apply-templates select="choiceresponse/*[not(self::checkboxgroup)]"/>
+                    <xsl:apply-templates select="numericalresponse/*[not(self::responseparam or self::formulaequationinput)]"/>
+                    <xsl:apply-templates select="stringresponse/*[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
+                    <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
                 </body>
                 <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|solution"/>
             </question>    
@@ -143,7 +149,8 @@
 <!--Problem types-->
     <!--mutiple choice-->
     <xsl:template match="multiplechoiceresponse">
-        <xsl:apply-templates select="*[not(self::label)]"/> <!--just sending it through to be dealt with in the next one--> <!--excluding label, from kth, since contents of that go in body-->
+        <xsl:apply-templates select="choicegroup"/> <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag, and that was processed in body and should not be included here. This replaces the below.-->
+        <!--<xsl:apply-templates select="*[not(self::label)]"/>--> <!--just sending it through to be dealt with in the next one--> <!--excluding label, from kth, since contents of that go in body-->
     </xsl:template>
     <xsl:template match="multiplechoiceresponse/choicegroup"> <!--at the moment it looks like these always come together like this. Also choicegroup can have a type attribute (its value tends to be MultipleChoice) but it doesn't look to be doing anything? If either of these are false will need to change.-->
         <multiple_choice shuffle="false"> <!--it doesn't look like they have shuffle-->
@@ -216,7 +223,8 @@
     <!--multiple select-->
         <!--note: the list of choices here works the same as in multiple choice and can be handled by the same template (above). Feedback, however, works differently, and needs its own handling-->
     <xsl:template match="choiceresponse">
-        <xsl:apply-templates/> <!--just sending it through to be dealt with in the next one-->
+        <xsl:apply-templates select="checkboxgroup"/> <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag, and that was processed in body and should not be included here. This replaces the below.-->
+        <!--<xsl:apply-templates/>--> <!--just sending it through to be dealt with in the next one-->
     </xsl:template>
     <xsl:template match="choiceresponse/checkboxgroup"> <!--at the moment it looks like these always come together like this. Also checkboxgroup can have a label attribute and a direction attribute (in course design they seem to tend to say 'x' and 'vertical') but they don't look to be doing anything? If either of these are false will need to change.-->
         <multiple_choice select="multiple" shuffle="false"> <!--it doesn't look like they have shuffle-->
