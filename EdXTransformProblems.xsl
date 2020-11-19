@@ -45,10 +45,10 @@
                     <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
                     
                     <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
-                    <xsl:apply-templates select="multiplechoiceresponse/*[not(self::choicegroup)]"/>
-                    <xsl:apply-templates select="choiceresponse/*[not(self::checkboxgroup)]"/>
-                    <xsl:apply-templates select="numericalresponse/*[not(self::responseparam or self::formulaequationinput)]"/>
-                    <xsl:apply-templates select="stringresponse/*[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
+                    <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup)]"/>
+                    <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup)]"/>
+                    <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput)]"/>
+                    <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
                     <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
                 </body>
                 <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|solution"/>
