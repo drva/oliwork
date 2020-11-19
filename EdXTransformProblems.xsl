@@ -339,9 +339,9 @@
     </xsl:template>
  
 <!--for KTH#2-->
-    <xsl:template match="pre/code">
+    <xsl:template match="pre[code]">
         <codeblock syntax="text">
-            <xsl:apply-templates/>
+            <xsl:apply-templates select="./code/node()"/>
         </codeblock>
     </xsl:template>
     
