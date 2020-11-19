@@ -166,6 +166,7 @@
         <xsl:variable name="choiceid" select="./count(preceding-sibling::*)"/>
         <response match="{$choiceid}" score="{$points}">
             <feedback>
+                <xsl:text>Correct! </xsl:text> <!--edx has this seperately from the feedback, so adding it in. Also handles cases without feedback.-->
                 <!--Philanthropy has feedback in choicehint elements, while Course Design has it in Python scripts-->
                 <xsl:apply-templates select="choicehint"/>
                 <xsl:apply-templates select="//script" mode="mcfeedback">
@@ -178,6 +179,7 @@
         <xsl:variable name="choiceid" select="./count(preceding-sibling::*)"/>
         <response match="{$choiceid}" score="0">
             <feedback>
+                <xsl:text>Incorrect. </xsl:text>
                 <xsl:apply-templates select="choicehint"/>
                 <xsl:apply-templates select="//script" mode="mcfeedback">
                     <xsl:with-param name="choiceidparam" select="$choiceid"/>
