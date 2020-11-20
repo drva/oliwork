@@ -234,7 +234,11 @@
             <!--the minimum needed for multiple select feedback is 'selecting all and only the answers that should be selected is correct; everything else is wrong'-->
         <xsl:variable name="correctmatch" select="string-join((choice[@correct='true']/string(count(preceding-sibling::*))), ',')"/> <!--preceding siblings is again used to number and this identify the choices-->
         <part>
-            <xsl:apply-templates select="choice" mode="feedback"/>
+            <xsl:choose>
+                <xsl:when test="choice/choicehint">
+                    <xsl:apply-templates select="choice" mode="feedback"/> <!--this is needed when the feedback, that being choicehint, exists-->
+                </xsl:when>
+            </xsl:choose>
             <xsl:apply-templates select="compoundhint"/>
             <!--^based on kth-->
             <response  match="{$correctmatch}" score="1">              
