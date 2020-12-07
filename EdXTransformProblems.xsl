@@ -322,6 +322,19 @@
         </response>
     </xsl:template>
     
+    <!--numeric (looking at kth#2)-->
+    <xsl:template match="numericalresponse">
+        <numeric id="field"/> <!--don't think this id matters for anything, looking at diana's course examples?-->
+        <part>
+            <response match="{./@answer}" score="1">
+                <feedback>Correct!</feedback>
+            </response>
+            <response match="*">
+                <feedback>Incorrect.</feedback>
+            </response>
+        </part>
+    </xsl:template>
+    
 <!--hints-->
     <!--At least some feedback-in-python files have these. They can go with a hint in the python, according to the docs, but there are files with this but no actual hint.
     Not getting completely rid of it atm in case some files *do* have hints, so currently commenting out.-->       
@@ -351,5 +364,21 @@
     
     <xsl:template match="description">
         <p><xsl:apply-templates/></p>
+    </xsl:template>
+    
+    <!--library_content-->
+        <!--library_content is meant to be pools, but we don't have pools for inline assessments. Here all the problems are kept in, but rather than making the library_content an assessment, it's made a section with links to the problems-->
+    <xsl:template match="library_content"> <!--putting this here rather than making a new stylesheet since it should be short and is relevant to problems. This means I'll still have the header, which this doesn't need, but can strip out later-->
+        <xsl:result-document href="{concat('lc_',$filename, '.xml')}">
+            <section>
+                <title><xsl:value-of select="./@display_name"/></title> <!--ignoring some other attributes-->
+                <body>
+                    <xsl:apply-templates/>
+                </body>
+            </section>
+        </xsl:result-document>
+    </xsl:template>
+    <xsl:template match="library_content/problem">
+        <inline idref="{concat('a_',./@url_name)}"/> <!--this should be wb:inline but that causes namespace problems and since I will need an extra script anyway that will be handled there-->
     </xsl:template>
 </xsl:stylesheet>
