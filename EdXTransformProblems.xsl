@@ -326,7 +326,17 @@
     <xsl:template match="numericalresponse">
         <numeric id="field"/> <!--don't think this id matters for anything, looking at diana's course examples?-->
         <part>
-            <response match="{./@answer}" score="1">
+            <response score="1">
+                <xsl:attribute name="match">
+                    <xsl:choose>
+                        <xsl:when test="./responseparam[@type='tolerance']">
+                            <xsl:value-of select="concat('[',string(number(./@answer)-number(./responseparam/@default)),',',string(number(./@answer)+number(./responseparam/@default)),']')"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="./@answer"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
                 <feedback>Correct!</feedback>
             </response>
             <response match="*">
