@@ -76,10 +76,27 @@ public class ChangePageNames
 		if(!doMatch) //if the string given isn't in the right for, just give it back.
 			return toFix;
 		
-		String truncatedUnitName = matcher.group("unitname").split("_")[0]; //note, these will produce an undesirable effect if the unitname/modulename currently starts with an underscore for some reason. 
-		String truncatedModuleName = matcher.group("modulename").split("_")[0];
+		//String truncatedUnitName = matcher.group("unitname").split("_")[0]; //note, these will produce an undesirable effect if the unitname/modulename currently starts with an underscore for some reason. 
+		//String truncatedModuleName = matcher.group("modulename").split("_")[0];
+		
+		//above noted problem with something already beginning with underscore happened, adjusting code to work better with this.
+		String truncatedUnitName = wordFromUnderscoreString(matcher.group("unitname"));
+		String truncatedModuleName = wordFromUnderscoreString(matcher.group("modulename"));
+		
 		
 		//note I am currently *not* checking if this causes uniqueness problems or doing anything about this
 		return "u-"+truncatedUnitName+"-m-"+truncatedModuleName+matcher.group("pagesection");
+	}
+	
+	//job-doing function - taking a string of 'words' separated by underscores and returning the first non-empty one (for truncating unit and module names)
+	public static String wordFromUnderscoreString(String toFix)
+	{
+		//split on underscore, look through resulting array and return first non blank. If for some reason they're all blank go ahead and return blank.
+		String[] wordArray = toFix.split("_");
+		for(int i=0; i<wordArray.length; i++)
+			if(!wordArray[i].equals(""))
+				return wordArray[i];
+		
+		return "";
 	}
 }
