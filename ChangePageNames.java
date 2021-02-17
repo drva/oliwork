@@ -48,9 +48,9 @@ public class ChangePageNames
 		//to promote uniqueness (though still doesn't guarantee), we can optionally add a number derived from hashing to the page names (and we likewise do this down below if we do it here).
 		String numCode ="";
 		if(hashYN)
-			numCode = Integer.toString(Math.abs(inputFile.getName().hashCode() % 1000));
+			numCode = Integer.toString(Math.abs(inputFile.getName().split(".xml")[0].hashCode() % 1000)); //splitting here so it can match the in-file versions
 			
-		String newFilename = removeVowelsNotFirst(truncateUnitsModules(inputFile.getName())) + numCode;
+		String newFilename = removeVowelsNotFirst(truncateUnitsModules(inputFile.getName())).split(".xml")[0] + numCode +".xml"; //need to split off and re-add the .xml so that the numcode if applicable goes in front of it
 		//checking if the filename we want has already been used https://howtodoinjava.com/java/io/how-to-check-if-file-exists-in-java/
 		File tempCheckFile = new File(destinationDirectory+"/"+newFilename);
 		if(tempCheckFile.exists())
@@ -75,8 +75,8 @@ public class ChangePageNames
 				matcher.matches();
 				
 				if(hashYN)
-					numCode = Integer.toString(Math.abs(matcher.group("filename").hashCode() % 1000));
-				toAFile.println(matcher.group("pre")+removeVowelsNotFirst(truncateUnitsModules(matcher.group("filename")))+numCode+matcher.group("post"));
+					numCode = Integer.toString(Math.abs(matcher.group("filename").split(".xml")[0].hashCode() % 1000));
+				toAFile.println(matcher.group("pre")+removeVowelsNotFirst(truncateUnitsModules(matcher.group("filename"))).split(".xml")[0]+numCode+matcher.group("post")); //doing the .xml split here too. It should be needed, but it's really important this match the filename version, including if by some chance there's a .xml in the middle of the string somewhere. This being here is why the split is done last; otherwise if there was a .xml in the middle a split version might not fit the filename structure.
 			}
 			else
 				toAFile.println(hold);
