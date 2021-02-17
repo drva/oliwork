@@ -1,4 +1,5 @@
 //args[0] is the directory with the files whose names need changing
+//args[1] is hash if you want to do the promoting-uniqueness hashing and anything else if you don't.
 
 import java.io.*;
 import java.util.Scanner;
@@ -8,9 +9,13 @@ import java.util.regex.Matcher;
 public class ChangePageNames
 {
 	public static String destinationDirectory = "namechangedAgainconvertedpages";
+	public static boolean hashYN = false;
 	
 	public static void main(String[] args) throws IOException
 	{
+		if(args[1].equals("hash"))
+			hashYN = true;
+		
 		File[] directoryList = new File(args[0]).listFiles(); //https://stackoverflow.com/questions/4917326/how-to-iterate-over-the-files-of-a-certain-directory-in-java
 		for(int i=0; i<directoryList.length; i++)
 		{
@@ -20,6 +25,10 @@ public class ChangePageNames
 	
 	public static String removeVowelsNotFirst(String toFix)
 	{
+		//a bit of a support for roman numerals having been used - will also catch other ii and iii's but those don't come up *too* often I think. Will still render iv and vi as v but those *do* come up often otherwise so making the tradeoff.
+		toFix = toFix.replaceAll("iii|III","3");
+		toFix = toFix.replaceAll("ii|II","2");
+		
 		//I was thinking I couldn't remove u's because u marks the unit-name part of the filename, but no, I can just leave the first character alone and remove other u's
 		String fixed="";
 		char hold;
@@ -36,7 +45,17 @@ public class ChangePageNames
 	//changes the name of the file to the new version. Looks through file for more filenames and changes those too
 	public static void makeNameChangedFile(File inputFile) throws IOException
 	{		
-		String newFilename = removeVowelsNotFirst(truncateUnitsModules(inputFile.getName()));
+		//to promote uniqueness (though still doesn't guarantee), we can optionally add a number derived from hashing to the page names (and we likewise do this down below if we do it here).
+		String numCode ="";
+		if(hashYN)
+			numCode = Integer.toString(Math.abs(inputFile.getName().hashCode() % 1000));
+			
+		String newFilename = removeVowelsNotFirst(truncateUnitsModules(inputFile.getName())) + numCode;
+		//checking if the filename we want has already been used https://howtodoinjava.com/java/io/how-to-check-if-file-exists-in-java/
+		File tempCheckFile = new File(destinationDirectory+"/"+newFilename);
+		if(tempCheckFile.exists())
+			System.out.println("!DUPLICATE " + inputFile.getName());
+		
 		PrintWriter toAFile = new PrintWriter(new File(destinationDirectory+"/"+newFilename)); //do I need to add .xml? No, already there
 		
 		String hasFilenameRegex = "(?<pre>[\\s\\S]*?\")(?<filename>u-\\S+?m-\\S+?p-\\S+?)(?<post>\"[\\s\\S]*)"; 
@@ -55,7 +74,9 @@ public class ChangePageNames
 				Matcher matcher = pattern.matcher(hold);
 				matcher.matches();
 				
-				toAFile.println(matcher.group("pre")+removeVowelsNotFirst(truncateUnitsModules(matcher.group("filename")))+matcher.group("post"));
+				if(hashYN)
+					numCode = Integer.toString(Math.abs(matcher.group("filename").hashCode() % 1000));
+				toAFile.println(matcher.group("pre")+removeVowelsNotFirst(truncateUnitsModules(matcher.group("filename")))+numCode+matcher.group("post"));
 			}
 			else
 				toAFile.println(hold);
