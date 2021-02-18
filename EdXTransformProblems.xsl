@@ -52,15 +52,54 @@
                     <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
                 </body>
                 <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|solution"/>
+                <xsl:apply-templates select ="optionresponse" mode="choices"/> <!--bc of how optionresponse is put together differently, it's also dealt with somewhat differently-->
+                <xsl:apply-templates select ="optionresponse" mode="feedback"/>
             </question>    
         </assessment>
         </xsl:result-document>
     </xsl:template>
-    <xsl:template match="problem[//optionresponse]"> <!--being treated seperately because it is put together differently-->
+    <!--when there's more than one question in a problem. Should copy the above but seperate out assessment and question, basically, through q element that I add to seperate out the subproblems-->
+    <xsl:template match="problem[q]"> <!--Currently not handling any of the attributes of problem-->
+        <xsl:result-document href="{concat('a_',$filename, '.xml')}"> <!--https://www.oxygenxml.com/forum/topic7987.html-->
+            <assessment>
+                <xsl:attribute name="id"><xsl:value-of select="concat('a_',$filename)"/></xsl:attribute>
+                <title> <!--if I understand and remember correctly, this element is necessary but not displayed. However, KTH#2 has some content-bearing display names for problems, which I'd like to put somewhere, and it turns out title is displayed in echo editing so allowing for different ones could be beneficial.-->
+                    <xsl:choose>
+                        <xsl:when test="./@display_name">
+                            <xsl:value-of select="./@display_name"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:text>tutor</xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </title>   
+                <xsl:apply-templates/>
+            </assessment>
+        </xsl:result-document>
+    </xsl:template>
+    <xsl:template match="q">
+        <question>
+            <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename, '_',string(count(preceding-sibling::*)))"/></xsl:attribute> <!--it is not allowed to be identical to the filename--> <!--here also need to be numbered, since there's more than one-->
+            <body>
+                <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
+                <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
+                
+                <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
+                <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup)]"/>
+                <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup)]"/>
+                <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput)]"/>
+                <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
+                <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
+            </body>
+            <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|solution"/>
+        </question>
+    </xsl:template>
+    
+    <!--<xsl:template match="problem[//optionresponse]"> <!-being treated seperately because it is put together differently->
         <xsl:result-document href="{concat('a_',$filename, '.xml')}">
         <assessment>
             <xsl:attribute name="id"><xsl:value-of select="concat('a_',$filename)"/></xsl:attribute>
-            <title> <!--if I understand and remember correctly, this element is necessary but not displayed. However, KTH#2 has some content-bearing display names for problems, which I'd like to put somewhere, and it turns out title is displayed in echo editing so allowing for different ones could be beneficial.-->
+            <title> <!-if I understand and remember correctly, this element is necessary but not displayed. However, KTH#2 has some content-bearing display names for problems, which I'd like to put somewhere, and it turns out title is displayed in echo editing so allowing for different ones could be beneficial.->
                 <xsl:choose>
                     <xsl:when test="./@display_name">
                         <xsl:value-of select="./@display_name"/>
@@ -71,7 +110,7 @@
                 </xsl:choose>
             </title> 
             <question>
-                <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
+                <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!-it is not allowed to be identical to the filename->
                 <body>
                     <xsl:apply-templates/>
                 </body>
@@ -80,7 +119,7 @@
             </question>    
         </assessment>
         </xsl:result-document>
-    </xsl:template>
+    </xsl:template>-->
     
     <xsl:template match="submit_and_compare"> <!--Currently not handling any of the other attributes  here-->
         <assessment>
@@ -216,10 +255,6 @@
     </xsl:template>
     
     
-    <xsl:template match="optionresponse"> <!--this is the one in body, so it just has the input_ref--> <!--I am ignoring the label attribute atm (it is sometimes used clearly unintentionally)-->
-        <input_ref input="{concat('input',./count(preceding::optionresponse))}"/> <!--numbering for ids-->
-    </xsl:template>
-    
     <!--multiple select-->
         <!--note: the list of choices here works the same as in multiple choice and can be handled by the same template (above). Feedback, however, works differently, and needs its own handling-->
     <xsl:template match="choiceresponse">
@@ -268,6 +303,45 @@
             </feedback>
         </response>
     </xsl:template>
+    
+    
+    <!--optionresponse-->
+    <xsl:template match="optionresponse"> <!--this is the one in body, so it just has the input_ref--> <!--I am ignoring the label attribute atm (it is sometimes used clearly unintentionally)-->
+        <input_ref input="{concat('input',./count(preceding::optionresponse))}"/> <!--numbering for ids-->
+    </xsl:template>
+    
+        <!--looking at kth#2-->
+    <xsl:template match="optionresponse" mode="choices"> <!--these are the ones for the list of inputs and their choices that's below body-->
+        <fill_in_the_blank id="{concat('input',./count(preceding::optionresponse))}">
+          <xsl:apply-templates/>
+        </fill_in_the_blank>    
+    </xsl:template>
+    <xsl:template match="optioninput"><xsl:apply-templates/></xsl:template> <!--sending through-->
+    <xsl:template match="optioninput/option">
+        <choice value="{./count(preceding-sibling::*)}"><xsl:apply-templates/></choice> <!--doing ids by numbering-->
+    </xsl:template>
+    
+    <xsl:template match="optionresponse" mode="feedback"> <!--the feedback ones-->
+        <part>
+           <xsl:apply-templates mode="feedback"/> 
+        </part>  
+    </xsl:template>
+    <xsl:template match="optioninput" mode="feedback"><xsl:apply-templates mode="feedback"/></xsl:template> <!--sending through-->
+    <xsl:template match="optioninput/option[@correct='true' or @correct='True']" mode="feedback">
+        <response input="{concat('input', ./parent::*/parent::*/count(preceding::optionresponse))}" match="{./count(preceding-sibling::*)}" score="{$points}"> <!--getting the correct corresponding ids etc for the input and choice this goes with-->
+            <feedback>
+                <xsl:text>Correct! </xsl:text> <!--edx has this seperately from the feedback, so adding it in. Also handles cases without feedback.-->
+            </feedback>
+        </response>
+    </xsl:template>
+    <xsl:template match="optioninput/option[@correct='false' or @correct='False']" mode="feedback">
+        <response input="{concat('input', ./parent::*/parent::*/count(preceding::optionresponse))}" match="{./count(preceding-sibling::*)}" score="0"> <!--getting the correct corresponding ids etc for the input and choice this goes with-->
+            <feedback>
+                <xsl:text>Incorrect. </xsl:text> <!--edx has this seperately from the feedback, so adding it in. Also handles cases without feedback.-->
+            </feedback>
+        </response>
+    </xsl:template>
+    
     
     <!--string response (looking at kth)-->
     <xsl:template match="stringresponse">
@@ -326,19 +400,28 @@
     <xsl:template match="numericalresponse">
         <numeric id="field"/> <!--don't think this id matters for anything, looking at diana's course examples?-->
         <part>
-            <response score="1">
-                <xsl:attribute name="match">
-                    <xsl:choose>
-                        <xsl:when test="./responseparam[@type='tolerance']">
-                            <xsl:value-of select="concat('[',string(number(./@answer)-number(./responseparam/@default)),',',string(number(./@answer)+number(./responseparam/@default)),']')"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="./@answer"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:attribute>
+            <response score="1" match="{./@answer}"> <!--diana's example put exact answer and range seperately and that seems like a good idea even if they have the same point value-->
                 <feedback>Correct!</feedback>
-            </response>
+            </response> 
+            <xsl:choose> <!--if there's an acceptable range, need to accept answers within it-->
+                <xsl:when test="./responseparam[@type='tolerance']">
+                    <xsl:comment><xsl:text>tolerance: </xsl:text><xsl:value-of select="./responseparam/@default"/></xsl:comment>
+                    <response score="1">
+                        <xsl:attribute name="match">
+                            <xsl:choose><!--sometimes the tolerance is a number and sometimes is a percent; handling both-->
+                                <xsl:when test="./responseparam[contains(@default, '%')]">
+                                    <xsl:variable name="percentvalue" select="substring-before(./responseparam/@default,'%')"/>
+                                    <xsl:value-of select="concat('[',string((1-.01*number($percentvalue))*number(./@answer)),',',string((1+.01*number($percentvalue))*number(./@answer)),']')"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="concat('[',string(number(./@answer)-number(./responseparam/@default)),',',string(number(./@answer)+number(./responseparam/@default)),']')"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:attribute>
+                        <feedback>Correct!</feedback>
+                    </response>
+                </xsl:when>
+            </xsl:choose>
             <response match="*">
                 <feedback>Incorrect.</feedback>
             </response>
@@ -374,6 +457,10 @@
     
     <xsl:template match="description">
         <p><xsl:apply-templates/></p>
+    </xsl:template>
+        
+    <xsl:template match="span"> <!--just stripping out atm-->
+        <xsl:apply-templates/>
     </xsl:template>
     
     <!--library_content-->
