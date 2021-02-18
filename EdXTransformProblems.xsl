@@ -45,16 +45,17 @@
                     <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
                     
                     <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
-                    <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup)]"/>
-                    <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup)]"/>
-                    <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput)]"/>
-                    <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
+                    <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup or self::solution)]"/>
+                    <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup or self::solution)]"/>
+                    <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::solution)]"/>
+                    <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint or self::solution)]"/>
                     <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
                 </body>
-                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|solution"/>
+                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse"/>
                 <xsl:apply-templates select ="optionresponse" mode="choices"/> <!--bc of how optionresponse is put together differently, it's also dealt with somewhat differently-->
                 <xsl:apply-templates select ="optionresponse" mode="feedback"/>
-            </question>    
+            </question>
+            <xsl:apply-templates select="//solution"/>
         </assessment>
         </xsl:result-document>
     </xsl:template>
@@ -91,7 +92,7 @@
                 <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
                 <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
             </body>
-            <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|solution"/>
+            <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse"/>
         </question>
     </xsl:template>
     
@@ -150,8 +151,8 @@
     
 <!--various problem text elements--> 
     <!--CHECK Do we have a way to do a title?-->
-    <xsl:template match="h2">
-        <em><xsl:apply-templates select="@* | node()"/></em>
+    <xsl:template match="h2|h3">
+        <em><xsl:apply-templates/></em> <!--this had the version that pulls in attributes before but I don't think I want that?-->
     </xsl:template>
     
     <!--bold and italics--> <!--copied from the workbook page stylesheet-->
@@ -428,6 +429,24 @@
         </part>
     </xsl:template>
     
+<!--'solution'-->
+    <!--looking at kth#3/ramp i-->
+    <!--edX has a solution/detailed solution thing, seperate from other kinds of feedback. Currently deciding to handle it by making it its own question.
+    This keeps it distinct from feedback, if applicable, and allows the student to try multiple attempts without seeing it but still definitely be able to see it if they want.-->
+    <xsl:template match="solution">
+        <question id="{concat('solution', ./count(preceding-sibling::*))}"> <!--originally it was just solution, but ran into a problem with more than one. Doing preceding sibling bc it's simple, will def not be the same, and I don't actually need the number to mean anything-->
+            <body><em style="bold">Detailed solution</em></body>
+            <multiple_choice shuffle="false">
+                <choice value="0">Click here to see the detailed solution.</choice>
+            </multiple_choice>
+            <part>
+                <response match="0" score="0">
+                    <feedback><xsl:apply-templates/></feedback>
+                </response>
+            </part>
+        </question>
+    </xsl:template>
+    
 <!--hints-->
     <!--At least some feedback-in-python files have these. They can go with a hint in the python, according to the docs, but there are files with this but no actual hint.
     Not getting completely rid of it atm in case some files *do* have hints, so currently commenting out.-->       
@@ -461,6 +480,18 @@
         
     <xsl:template match="span"> <!--just stripping out atm-->
         <xsl:apply-templates/>
+    </xsl:template>
+<!--for KTH#3/ramp i--> 
+    <xsl:template match="div"> <!--just stripping out atm-->
+        <xsl:apply-templates/>
+    </xsl:template>
+    
+    <!--attempting to do: br's in paragraphs should be stripped out (not sure what else to do) but noted; brs not in paragraphs should get an empty p-->
+    <xsl:template match="p/br">
+        <xsl:comment><br/></xsl:comment>
+    </xsl:template>
+    <xsl:template match="br">
+        <p/>
     </xsl:template>
     
     <!--library_content-->
