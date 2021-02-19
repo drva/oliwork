@@ -47,7 +47,7 @@
                     <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
                     <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup or self::solution)]"/>
                     <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup or self::solution)]"/>
-                    <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::solution)]"/>
+                    <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer or self::solution)]"/>
                     <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint or self::solution)]"/>
                     <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
                 </body>
@@ -88,7 +88,7 @@
                 <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
                 <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup)]"/>
                 <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup)]"/>
-                <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput)]"/>
+                <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer)]"/>
                 <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
                 <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
             </body>
@@ -382,7 +382,7 @@
                 <xsl:value-of select="./@answer"/>
             </xsl:attribute>
             <feedback>
-                <xsl:apply-templates/>
+                <xsl:text>Correct! </xsl:text><xsl:apply-templates/>
             </feedback>
         </response>
     </xsl:template>
@@ -423,6 +423,7 @@
                     </response>
                 </xsl:when>
             </xsl:choose>
+            <xsl:apply-templates select="additional_answer"/> <!--I *think* these are other correct answers?-->
             <response match="*">
                 <feedback>Incorrect.</feedback>
             </response>
