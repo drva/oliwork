@@ -245,9 +245,15 @@ public class StanfordConvertXML
 		String nextOneDown = "html";
 		String oliName = "page";
 		
+		//moving this up here bc going to need it for the below
+		String filenum = filename.split("[./]")[filename.split("[./]").length-2]; //I only want the number id not the rest of the file address
+		
+		//to promote (though this will not guarantee) uniqueness, going to add the first 4 digits of the page's edx id to its id
+		String shortnum = filenum.substring(0,4);
+		
 		//moving this up here because I need it to pass to the html handler for LO reasons
 		//page id being modified to have unit and module id in it to avoid name overlaps
-		String pageID = "u-"+unitid+"-m-"+moduleid+"-p-";
+		String pageID = "u-"+unitid+"-m-"+moduleid+"-p-"+shortnum;
 		
 		Scanner fromTextFile = new Scanner(new File(filename));
 		
@@ -286,8 +292,7 @@ public class StanfordConvertXML
 								"\t<body>");
 					//{now handled in the xslt} so there's a problem where learning objective stuff goes in the head and I don't have those yet to put there. Will handle that later.
 				
-				//logging to the file of name-file correspondences
-				String filenum = filename.split("[./]")[filename.split("[./]").length-2]; //I only want the number id not the rest of the file address
+				//logging to the file of name-file correspondences				
 				lookupTable.println("<page filename=\""+filenum+"\"><id pageid=\""+pageID+"\"/></page>");
 				
 				continue;
