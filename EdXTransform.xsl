@@ -140,6 +140,17 @@
         </link>
     </xsl:template>-->
     <!--later: potentially what was wrong here is that to put just text in an attibute you don't use xsl:text, you just write it in? See notes.-->
+    <xsl:template match="a[not(@href)]"> <!--kth ramp i has some a's without hrefs that if they go through produce links without hrefs which is not allowed, so, stripping.-->
+        <xsl:apply-templates/>
+    </xsl:template>
+    <!--kth ramp i also has some links that link to pdfs within the course directory with relative links. Handling those-->
+    <xsl:template match="a[matches(@href,'/static/\S+')]">
+        <link>
+            <xsl:attribute name="href"><xsl:value-of select="concat('..',replace(./@href,'static','webcontent'))"/></xsl:attribute>
+            <xsl:attribute name="target"><xsl:value-of select="'new'"/></xsl:attribute> <!--should prob open in a new window-->
+            <xsl:apply-templates select="@title | node()"/> <!--the ones I saw didn't have a title but if one did then good to keep-->
+        </link>
+    </xsl:template>
     
     <!--bibliography-->
         <!--the bottom-of-page part-->
