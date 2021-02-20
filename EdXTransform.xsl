@@ -244,7 +244,9 @@
     <xsl:template match="img">
         <image>
             <xsl:attribute name="src"><xsl:value-of select="concat('..',replace(./@src,'static','webcontent'))"/></xsl:attribute>
-            <xsl:apply-templates select="@alt | @title | @height | @width | node()"/> 
+            <xsl:attribute name="height"><xsl:value-of select="round(number(./@height))"/></xsl:attribute> <!--ran into in kth ramp i that these must be positive integers and sometimes weren't-->
+            <xsl:attribute name="width"><xsl:value-of select="round(number(./@width))"/></xsl:attribute>
+            <xsl:apply-templates select="@alt | @title | node()"/> 
         </image>
     </xsl:template>
 
@@ -285,12 +287,9 @@
     <!--currently being erased-->
     <xsl:template match="@align"></xsl:template>
     <xsl:template match="@class"></xsl:template>
-    <!--currently being commented out-->
+    <!--used to comment this out, but kth ramp i has some text in them, so now stripping-->
     <xsl:template match="g">
-        <xsl:text disable-output-escaping="yes">&lt;!--</xsl:text>
-        <g>
-            <xsl:apply-templates select="@* | node()"/> 
-        </g>--<xsl:text disable-output-escaping="yes">&gt;</xsl:text> 
+        <xsl:apply-templates/>
     </xsl:template>
     <!--list tags having not-permitted attributes stripped out (want to go through and handle better later, probably when have all the pages)-->
         <!--additional note, unconventional_examples.xml, which has iframes, also has download links. Those go through fine but we may want to do something about them since they're not our servers.-->
@@ -366,5 +365,23 @@
                 <xsl:apply-templates select="@*[name()!='href' and name()!='title'] | node()"/> <!--the internal links I saw didn't have titles but in case some do-->
             </activity_link>
         </p>
+    </xsl:template>
+   
+<!--from KTH ramp i-->
+    <!--having an issue with images ending up in bold tags which is not allowed. This is def overspecific to the problem but don't have a general solution atm.-->
+    <xsl:template match="b[span[img]]">
+        <!--was originally trying to retain the bolding on any other children, but it's complicated and then I found one of these *spans* having other children, and I think really I'll just strip the bold atm.-->
+        <xsl:comment>was bold, start</xsl:comment><xsl:apply-templates/><xsl:comment>was bold, end</xsl:comment>
+            <!--I want to strip out the bold tags around the span with the image, but if there was anything else in the b I want to keep the bold tags on it-->
+        <!--<xsl:for-each select="*">
+            <xsl:choose>
+                <xsl:when test="./span[img]">
+                    <xsl:apply-templates select="."/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <em style="bold"><xsl:apply-templates select="."/></em>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:for-each>  -->     
     </xsl:template>
 </xsl:stylesheet>
