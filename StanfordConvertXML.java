@@ -554,6 +554,7 @@ public class StanfordConvertXML
 		fixCharacters = fixCharacters.replaceAll("[’\\?]",""); //not sure if ncname but xml didn't like it
 		fixCharacters = fixCharacters.replaceAll("[!]",""); //adding in StanfordConvertXML. not sure if ncname but xml didn't like it
 		fixCharacters = fixCharacters.replaceAll("—","-"); //em-dash. adding in StanfordConvertXML. xml didn't like. 
+		fixCharacters = fixCharacters.replaceAll("´",""); //ran into in kth ramp i, had error.
 		
 		return fixCharacters;
 	}
@@ -562,7 +563,7 @@ public class StanfordConvertXML
 	{
 				
 //this is actually causing problems for what-were-nbsps and stuff; will want to fix		
-		fixCharacters = fixCharacters.replaceAll("&", "&amp;"); //goes first so it doesn't overwrite the others replacements after
+		fixCharacters = fixCharacters.replaceAll("&(?!amp;)", "&amp;"); //goes first so it doesn't overwrite the others replacements after. adding using lookahead to not interfere with already coded amps
  		//currently leaving these out so they don't mess up tags (also just found out from googling that ' and " don't even need to be escaped in text (neither does > actually))
  		//fixCharacters = fixCharacters.replaceAll("<", "&lt;");
  		//fixCharacters = fixCharacters.replaceAll(">", "&gt;");
@@ -579,6 +580,19 @@ public class StanfordConvertXML
 		fixCharacters = fixCharacters.replaceAll("&amp;ldquo;", "&#x201C;");
 		fixCharacters = fixCharacters.replaceAll("&amp;rdquo;", "&#x201D;");
 		fixCharacters = fixCharacters.replaceAll("&amp;macr;", "&#xAF;");
+		//umlauts and some other characters
+		fixCharacters = fixCharacters.replaceAll("&amp;auml;", "&#228;"); //http://www.computer-masters.net/german-umlauts-in-unicode-and-in-html.php
+		fixCharacters = fixCharacters.replaceAll("&amp;Auml;", "&#196;");
+		fixCharacters = fixCharacters.replaceAll("&amp;ouml;", "&#246;");
+		fixCharacters = fixCharacters.replaceAll("&amp;Ouml;", "&#214;");
+		fixCharacters = fixCharacters.replaceAll("&amp;uuml;", "&#252;");
+		fixCharacters = fixCharacters.replaceAll("&amp;Uuml;", "&#220;");
+		fixCharacters = fixCharacters.replaceAll("&amp;szlig;", "&#223;");
+		fixCharacters = fixCharacters.replaceAll("&amp;Aring;", "&#197;");
+		fixCharacters = fixCharacters.replaceAll("&amp;aring;", "&#229;");
+		
+		fixCharacters = fixCharacters.replaceAll("&amp;copy;", "&#169;");
+		fixCharacters = fixCharacters.replaceAll("&amp;bull;", "&#8226;");
 		
 		//while I'm here will also fix the <o:p> problem (there are empty <o:p> tags and they cause a namespace problem. Apparently this is just a microsoft thing https://stackoverflow.com/questions/7808968/what-do-op-elements-do-anyway/7809422)
  		fixCharacters = fixCharacters.replaceAll("<o:p>", "<p>");
