@@ -1,5 +1,6 @@
 //args[0] is the directory with the files whose names need changing
 //args[1] is hash if you want to do the promoting-uniqueness hashing and anything else if you don't.
+//args[2] is the destination
 
 import java.io.*;
 import java.util.Scanner;
@@ -8,13 +9,14 @@ import java.util.regex.Matcher;
 
 public class ChangePageNames
 {
-	public static String destinationDirectory = "namechangedAgainconvertedpages";
+	public static String destinationDirectory = "";
 	public static boolean hashYN = false;
 	
 	public static void main(String[] args) throws IOException
 	{
 		if(args[1].equals("hash"))
 			hashYN = true;
+		destinationDirectory = args[2];
 		
 		File[] directoryList = new File(args[0]).listFiles(); //https://stackoverflow.com/questions/4917326/how-to-iterate-over-the-files-of-a-certain-directory-in-java
 		for(int i=0; i<directoryList.length; i++)
