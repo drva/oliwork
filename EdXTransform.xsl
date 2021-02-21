@@ -285,6 +285,9 @@
     <xsl:template match="div|span|br|center">
         <xsl:apply-templates/> 
     </xsl:template>
+    <xsl:template match="p/br|p/span/br"> <!--IMPORTANT: span part will def need to be changed if I change how spans are handled in some ways-->
+        <xsl:text disable-output-escaping="yes">&lt;/p&gt;&lt;p&gt;</xsl:text> <!--update: for brs in p's, attempting to split the paragraph at any brs-->
+    </xsl:template>
     <!--list tags having not-permitted attributes stripped out (want to go through and handle better later, probably when have all the pages)-->
     <xsl:template match="li[@*]">
         <li><xsl:apply-templates select="@title | node()"/></li>
