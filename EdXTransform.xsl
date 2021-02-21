@@ -2,6 +2,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:bib="http://bibtexml.sf.net/"
+    xmlns:wb="http://oli.web.cmu.edu/activity/workbook/"
     exclude-result-prefixes="xs"
     version="2.0">
     <xsl:output
@@ -150,6 +151,12 @@
             <xsl:attribute name="target"><xsl:value-of select="'new'"/></xsl:attribute> <!--should prob open in a new window-->
             <xsl:apply-templates select="@title | node()"/> <!--the ones I saw didn't have a title but if one did then good to keep-->
         </link>
+    </xsl:template>
+    
+    <!--inline assessment links. Trying to do them in this converter (from the format they currently come out of the java in)-->
+    <xsl:template match="//codeblock[@syntax='xml' and matches(normalize-space(text()[2]),'^&lt;problem\surl_name=&quot;[0-9a-z]+&quot;/&gt;$', 's')]"> <!--right now they're in codeblocks; this looks for the right codeblocks with the right contents-->
+        <xsl:variable name="activityid" select="./tokenize(text()[2],'&quot;')[2]"/> <!--get the activity id, format it write, make the assessment link-->
+        <wb:inline idref="{concat('a_',$activityid)}"/>
     </xsl:template>
     
     <!--bibliography-->
