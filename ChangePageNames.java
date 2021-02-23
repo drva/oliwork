@@ -41,6 +41,10 @@ public class ChangePageNames
 			if(hold!='a' && hold!='e' && hold!='i' && hold!='o' && hold!='u')
 				fixed=fixed+hold;
 		}
+		
+		while(fixed.charAt(fixed.length()-1)=='_') 	//don't want the result to end in _, so if it does get rid of that. Including if there ends up a few in a row.
+			fixed = fixed.substring(0,fixed.length()-1);
+		
 		return fixed;
 	}
 	
@@ -52,7 +56,7 @@ public class ChangePageNames
 		if(hashYN)
 			numCode = Integer.toString(Math.abs(inputFile.getName().split(".xml")[0].hashCode() % 1000)); //splitting here so it can match the in-file versions
 			
-		String newFilename = removeVowelsNotFirst(truncateUnitsModules(inputFile.getName())).split(".xml")[0] + numCode +".xml"; //need to split off and re-add the .xml so that the numcode if applicable goes in front of it
+		String newFilename = removeVowelsNotFirst(truncateUnitsModules(inputFile.getName().split(".xml")[0])) + numCode +".xml"; //need to split off and re-add the .xml so that the numcode if applicable goes in front of it. edit: splitting before I put it through the fixes so that trailing _'s get removed here too.
 		//checking if the filename we want has already been used https://howtodoinjava.com/java/io/how-to-check-if-file-exists-in-java/
 		File tempCheckFile = new File(destinationDirectory+"/"+newFilename);
 		if(tempCheckFile.exists())
