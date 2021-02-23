@@ -20,6 +20,7 @@
     <!--For courses with videos, a file I make with the videos xml 
         At the moment must be in the same directory as xsl file.-->
     <xsl:variable name="videosfile" select="'allVideos.xml'"/>
+    <xsl:variable name="transcriptPrefix" select="'transcript'"/> <!--a prefix I add to pages made from srt transcript files to make them more recognizable. Up here for easier changing if I decide to-->
     
     <!--I don't want to miss anything, so adding the identity transformation to by default copy everything
         (and be overidden by more specific templates for things that need different handling)-->
@@ -181,8 +182,9 @@
                     <xsl:if test="$videosection/@display_name and not($videosection/@display_name='')"> <!--if there's a nonempty display name make it the title-->
                         <title><xsl:value-of select="$videosection/@display_name"/></title>
                     </xsl:if>
-                    <xsl:if test="$videosection/transcript"> <!--if there's a transcript, link to it-->
-                       <caption><link href="{concat('../static/',$videosection/transcript/@src)}">Download transcript</link></caption>
+                    <xsl:if test="$videosection/transcript"> <!--if there's a transcript, link to it and the page made from it-->
+                        <caption><activity_link target="new" idref="{concat($transcriptPrefix,tokenize($videosection/transcript/@src,'.srt')[1])}">View transcript</activity_link>, <link href="{concat('../webcontent/',$videosection/transcript/@src)}">Download transcript</link></caption>
+                        <alternate idref="{concat($transcriptPrefix,tokenize($videosection/transcript/@src,'.srt')[1])}">View transcript</alternate>
                     </xsl:if>
                 </youtube>
             </xsl:when>
@@ -198,8 +200,13 @@
                             </xsl:for-each>
                         </ul>
                     </li>
-                    <xsl:if test="$videosection/transcript"> <!--if there's a transcript, link to it-->
-                        <li><link href="{concat('../static/',$videosection/transcript/@src)}">Download transcript</link></li>
+                    <xsl:if test="$videosection/transcript"> <!--if there's a transcript, link to it and the page made from it-->
+                        <li>Transcript:
+                            <ul>
+                                <li><activity_link target="new" idref="{concat($transcriptPrefix,tokenize($videosection/transcript/@src,'.srt')[1])}">View transcript</activity_link></li>
+                                <li><link href="{concat('../webcontent/',$videosection/transcript/@src)}">Download transcript</link></li>
+                            </ul>
+                        </li>
                     </xsl:if>
                 </ul>
             </xsl:otherwise>
