@@ -17,6 +17,9 @@
     <!--File that maps the EdX file names to the new OLI file names. 
         At the moment must be in the same directory as xsl file.-->
     <xsl:variable name="pagestable" select="'pagesTable.xml'"/>
+    <!--For courses with videos, a file I make with the videos xml 
+        At the moment must be in the same directory as xsl file.-->
+    <xsl:variable name="videosfile" select="'allVideos.xml'"/>
     
     <!--I don't want to miss anything, so adding the identity transformation to by default copy everything
         (and be overidden by more specific templates for things that need different handling)-->
@@ -153,10 +156,54 @@
         </link>
     </xsl:template>
     
-    <!--inline assessment links. Trying to do them in this converter (from the format they currently come out of the java in)-->
-    <xsl:template match="//codeblock[@syntax='xml' and matches(normalize-space(text()[2]),'^&lt;problem\surl_name=&quot;[0-9a-z]+&quot;/&gt;$', 's')]"> <!--right now they're in codeblocks; this looks for the right codeblocks with the right contents-->
-        <xsl:variable name="activityid" select="./tokenize(text()[2],'&quot;')[2]"/> <!--get the activity id, format it write, make the assessment link-->
+    <!--inline assessment links. Trying to do them in this converter (from the format they currently come out of the java in).-->
+    <xsl:template match="codeblock[@syntax='xml' and matches(normalize-space(text()[2]),'^&lt;problem\surl_name=&quot;[0-9a-z]+&quot;/&gt;$', 's')]"> <!--right now they're in codeblocks; this looks for the right codeblocks with the right contents-->
+        <xsl:variable name="activityid" select="./tokenize(text()[2],'&quot;')[2]"/> <!--get the activity id, format it right, make the assessment link-->
         <wb:inline idref="{concat('a_',$activityid)}"/>
+    </xsl:template>
+    <!--video links. Looking at kth ramp i-->
+    <xsl:template match="codeblock[@syntax='xml' and matches(normalize-space(text()[2]),'^&lt;video\surl_name=&quot;[0-9a-z]+&quot;/&gt;$', 's')]"> <!--right now they're in codeblocks; this looks for the right codeblocks with the right contents-->
+        <xsl:variable name="videoid" select="./tokenize(text()[2],'&quot;')[2]"/> <!--get the video id-->
+        <xsl:variable name="videosection" select="document($videosfile)/videos/video[@url_name=$videoid]"/> <!--getting the relevant video's part in the file-->
+        <!--if there's a youtube video, use that, otherwise link to the download links provided-->
+        <xsl:choose>
+            <xsl:when test="$videosection[(@youtube_id_1_0 and not(@youtube_id_1_0='')) or @youtube]"> <!--currently videos seem to have both if they have one, but not assuming (but the 1_0 can be empty, in which case it doesn't count)-->
+                <youtube>
+                    <!--getting the youtube address-->
+                    <xsl:choose>
+                        <xsl:when test="$videosection[@youtube_id_1_0 and not(@youtube_id_1_0='')]">
+                            <xsl:attribute name="src"><xsl:value-of select="$videosection/@youtube_id_1_0"/></xsl:attribute>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:attribute name="src"><xsl:value-of select="tokenize($videosection/@youtube,':')[2]"/></xsl:attribute> <!--if I understand right how this attribute works-->
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    <xsl:if test="$videosection/@display_name and not($videosection/@display_name='')"> <!--if there's a nonempty display name make it the title-->
+                        <title><xsl:value-of select="$videosection/@display_name"/></title>
+                    </xsl:if>
+                    <xsl:if test="$videosection/transcript"> <!--if there's a transcript, link to it-->
+                       <caption><link href="{concat('../static/',$videosection/transcript/@src)}">Download transcript</link></caption>
+                    </xsl:if>
+                </youtube>
+            </xsl:when>
+            <xsl:otherwise> <!--videos with no youtube address are currently made into lists of the download links-->
+                <ul style="none">
+                    <xsl:if test="$videosection/@display_name and not($videosection/@display_name='')"> <!--if there's a nonempty display name make it the title-->
+                        <title><xsl:value-of select="$videosection/@display_name"/></title>
+                    </xsl:if>
+                    <li>Download:
+                        <ul style="none">
+                            <xsl:for-each select="$videosection/video_asset/encoded_video[not(@profile='youtube')]">
+                                <li><link href="{./@url}"><xsl:value-of select="./@profile"/></link></li>
+                            </xsl:for-each>
+                        </ul>
+                    </li>
+                    <xsl:if test="$videosection/transcript"> <!--if there's a transcript, link to it-->
+                        <li><link href="{concat('../static/',$videosection/transcript/@src)}">Download transcript</link></li>
+                    </xsl:if>
+                </ul>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
     
     <!--bibliography-->
@@ -404,5 +451,11 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:for-each>  -->     
+    </xsl:template>
+    
+    <xsl:template match="iframe/text()"> <!--have some text in an iframe, which is not allowed. Picked a tag from ones that are said to be allowed in iframes-->
+        <caption>
+            <xsl:value-of select="."/>
+        </caption>
     </xsl:template>
 </xsl:stylesheet>
