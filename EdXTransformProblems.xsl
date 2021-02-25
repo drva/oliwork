@@ -86,6 +86,7 @@
                 <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
                 
                 <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
+<!--NOTE: atm the below different from singlet processing, which has  or self::solution in all of these. as of kth ramp i have only seen solution in multipart at the end, where it ends up outside of qs. Keep this like this so if there is one in a q I notice-->               
                 <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup)]"/>
                 <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup)]"/>
                 <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer)]"/>
@@ -168,7 +169,7 @@
             <xsl:apply-templates select="@href | @title | node()"/> 
         </link>
     </xsl:template>
-    <xsl:template match="img">
+    <xsl:template match="img|image"> <!--kth ramp i, some images used <image> tag and we still need to change the address-->
         <image>
             <xsl:attribute name="src"><xsl:value-of select="concat('..',replace(./@src,'static','webcontent'))"/></xsl:attribute>
             <xsl:apply-templates select="@alt | @title | @height | @width | node()"/> 
@@ -287,6 +288,7 @@
                     Incorrect.
                 </feedback>
             </response>
+            <xsl:apply-templates select="//demandhint"/> <!--kth ramp i has some hints in multiple selects-->
         </part>
     </xsl:template>
     <xsl:template match="choiceresponse/checkboxgroup/choice" mode="feedback">
@@ -325,6 +327,7 @@
     <xsl:template match="optionresponse" mode="feedback"> <!--the feedback ones-->
         <part>
            <xsl:apply-templates mode="feedback"/> 
+           <xsl:apply-templates select="//demandhint"/> <!--haven't seen any of these yet but extrapolating-->
         </part>  
     </xsl:template>
     <xsl:template match="optioninput" mode="feedback"><xsl:apply-templates mode="feedback"/></xsl:template> <!--sending through-->
@@ -427,6 +430,7 @@
             <response match="*">
                 <feedback>Incorrect.</feedback>
             </response>
+            <xsl:apply-templates select="//demandhint"/> <!--haven't seen any of these yet but extrapolating-->
         </part>
     </xsl:template>
     
@@ -488,8 +492,12 @@
     </xsl:template>
     
     <!--attempting to do: br's in paragraphs should be stripped out (not sure what else to do) but noted; brs not in paragraphs should get an empty p-->
-    <xsl:template match="p/br">
+    <!--<xsl:template match="p/br">
         <xsl:comment><br/></xsl:comment>
+    </xsl:template>-->
+    <!--update, kth ramp i: br's in paragraphs should get the paragraph split-->
+    <xsl:template match="p/br">
+        <xsl:text disable-output-escaping="yes">&lt;/p&gt;&lt;p&gt;</xsl:text> 
     </xsl:template>
     <xsl:template match="br">
         <p/>
