@@ -91,14 +91,14 @@ public class SplitMultipartProblems
 		}
 		else if(numbegins>1) //this is a multipart, so we want to use q tags to separate the multiple parts
 		{
-			//want an opening q tag after the opening root problem tag
-			pattern = Pattern.compile(rootProblemBeginRegex);
-			matcher = pattern.matcher(fileText);
-			fileText = matcher.replaceFirst("$0\n<q>");
-			
 			//dividing the last part off from the others
 			String fileTextP1 = fileText.substring(0, startOfLastBegin);
 			String fileTextP2 = fileText.substring(startOfLastBegin);
+			
+			//want an opening q tag after the opening root problem tag
+			pattern = Pattern.compile(rootProblemBeginRegex);
+			matcher = pattern.matcher(fileTextP1);
+			fileTextP1 = matcher.replaceFirst("$0\n<q>");
 			
 			//for all parts except the last one, we want to close off the previous q and open a new one
 			pattern = Pattern.compile(problemPartEndRegex);
