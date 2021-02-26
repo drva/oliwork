@@ -183,7 +183,7 @@
                         <title><xsl:value-of select="$videosection/@display_name"/></title>
                     </xsl:if>
                     <xsl:if test="$videosection/transcript"> <!--if there's a transcript, link to it and the page made from it-->
-                        <caption><activity_link target="new" idref="{concat($transcriptPrefix,tokenize($videosection/transcript/@src,'.srt')[1])}">View transcript</activity_link>, <link href="{concat('../webcontent/',$videosection/transcript/@src)}">Download transcript</link></caption>
+                        <caption><activity_link target="new" idref="{concat($transcriptPrefix,tokenize($videosection/transcript/@src,'.srt')[1])}">View transcript</activity_link><!--, <link href="{concat('../webcontent/',$videosection/transcript/@src)}">Download transcript</link>--></caption> <!--transcript downloading wasn't working, and I decided that since the page version exists now just using that makes more sense anyway-->
                         <alternate idref="{concat($transcriptPrefix,tokenize($videosection/transcript/@src,'.srt')[1])}">View transcript</alternate>
                     </xsl:if>
                 </youtube>
@@ -204,7 +204,7 @@
                         <li>Transcript:
                             <ul>
                                 <li><activity_link target="new" idref="{concat($transcriptPrefix,tokenize($videosection/transcript/@src,'.srt')[1])}">View transcript</activity_link></li>
-                                <li><link href="{concat('../webcontent/',$videosection/transcript/@src)}">Download transcript</link></li>
+                                <!--<li><link href="{concat('../webcontent/',$videosection/transcript/@src)}">Download transcript</link></li>-->
                             </ul>
                         </li>
                     </xsl:if>
@@ -316,8 +316,12 @@
     <xsl:template match="img">
         <image>
             <xsl:attribute name="src"><xsl:value-of select="concat('..',replace(./@src,'static','webcontent'))"/></xsl:attribute>
-            <xsl:attribute name="height"><xsl:value-of select="round(number(./@height))"/></xsl:attribute> <!--ran into in kth ramp i that these must be positive integers and sometimes weren't-->
-            <xsl:attribute name="width"><xsl:value-of select="round(number(./@width))"/></xsl:attribute>
+            <xsl:if test="./@height"> <!--if's avoid making the attribute NaN if it never existed in the first place. Only encountered in problems so far but putting here in case-->
+                <xsl:attribute name="height"><xsl:value-of select="round(number(./@height))"/></xsl:attribute> <!--ran into in kth ramp i that these must be positive integers and sometimes weren't-->
+            </xsl:if>
+            <xsl:if test="./@width">
+                <xsl:attribute name="width"><xsl:value-of select="round(number(./@width))"/></xsl:attribute>
+            </xsl:if>
             <xsl:apply-templates select="@alt | @title | node()"/> 
         </image>
     </xsl:template>
