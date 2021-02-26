@@ -172,7 +172,13 @@
     <xsl:template match="img|image"> <!--kth ramp i, some images used <image> tag and we still need to change the address-->
         <image>
             <xsl:attribute name="src"><xsl:value-of select="concat('..',replace(./@src,'static','webcontent'))"/></xsl:attribute>
-            <xsl:apply-templates select="@alt | @title | @height | @width | node()"/> 
+            <xsl:if test="./@height">
+                <xsl:attribute name="height"><xsl:value-of select="round(number(./@height))"/></xsl:attribute> <!--ran into in kth ramp i that these must be positive integers and sometimes weren't-->
+            </xsl:if>
+            <xsl:if test="./@width">
+                <xsl:attribute name="width"><xsl:value-of select="round(number(./@width))"/></xsl:attribute>
+            </xsl:if>
+            <xsl:apply-templates select="@alt | @title | node()"/> 
         </image>
     </xsl:template>
     <!--NOTE, p should currently be handled by the identity transformation, if I get rid of that I'll need a replacement-->
