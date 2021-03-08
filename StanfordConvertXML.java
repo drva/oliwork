@@ -590,6 +590,8 @@ public class StanfordConvertXML
 		fixCharacters = fixCharacters.replaceAll("&amp;szlig;", "&#223;");
 		fixCharacters = fixCharacters.replaceAll("&amp;Aring;", "&#197;");
 		fixCharacters = fixCharacters.replaceAll("&amp;aring;", "&#229;");
+		fixCharacters = fixCharacters.replaceAll("&amp;oslash; ", "&#x000F8;");
+		fixCharacters = fixCharacters.replaceAll("&amp;Oslash; ", "&#x000D8;");
 		
 		fixCharacters = fixCharacters.replaceAll("&amp;copy;", "&#169;");
 		fixCharacters = fixCharacters.replaceAll("&amp;bull;", "&#8226;");
