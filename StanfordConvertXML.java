@@ -397,7 +397,7 @@ public class StanfordConvertXML
 			return; //exit early since the rest of the method is meant for not-this
 		}
 		//it turns out there is another format LOs can have, as in the philanthropy course, where they are distributed among html files, one per. Handling those
-		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Learning\\s+Objective\"[\\s\\S]+?"))
+		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Learning\\s+Objective\"[\\s\\S]+?") || XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Lärandemål\"[\\s\\S]+?")) //KTH Swedish CS 101 has these in Swedish
 		{
 			if(!distributedLOsOpen) //if this is the first LO of this page we've encountered
 			{
