@@ -379,7 +379,7 @@ public class StanfordConvertXML
 		}
 		//Reference goes in a <bib:file> which goes outside body so checking for that too
 			//it turns out some course, for instance the philanthropy course, put more things after a reference section. We can't allow that, so new processing to save it for the end
-		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"References?\"[\\s\\S]+?"))
+		if(XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"References?\"[\\s\\S]+?") || XMLContent.matches("[\\s\\S]+?display_name\\s*=\\s*\"Referenser\"[\\s\\S]+?")) //adding the Swedish version
 		{
 			//copy everything we're going to put into the reference section into a string to write into the file later
 			holdReferences += "<!--The .xml file paired with the source html file read:\n"+XMLContent+"\n-->";
@@ -595,6 +595,14 @@ public class StanfordConvertXML
 		
 		fixCharacters = fixCharacters.replaceAll("&amp;copy;", "&#169;");
 		fixCharacters = fixCharacters.replaceAll("&amp;bull;", "&#8226;");
+		
+		//< and >, to be safe
+		fixCharacters = fixCharacters.replaceAll("&amp;lt;", "<sym name=\"lt\"/>");
+		fixCharacters = fixCharacters.replaceAll("&amp;gt;", "<sym name=\"gt\"/>");
+		
+		fixCharacters = fixCharacters.replaceAll("&amp;raquo;", "&#187;");
+		fixCharacters = fixCharacters.replaceAll("&amp;laquo;", "&#171;");
+		
 		
 		//while I'm here will also fix the <o:p> problem (there are empty <o:p> tags and they cause a namespace problem. Apparently this is just a microsoft thing https://stackoverflow.com/questions/7808968/what-do-op-elements-do-anyway/7809422)
  		fixCharacters = fixCharacters.replaceAll("<o:p>", "<p>");
