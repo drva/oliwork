@@ -213,17 +213,30 @@
         </xsl:choose>
     </xsl:template>
     
-    <!--bibliography-->
+    <!--bibliography--> <!--now should recognize Swedish version also (hence accepting 'Referense'). Swedish cs101 also used h3 rather than h2-->
         <!--the bottom-of-page part-->
             <!--the reference section should be turned into the bib file-->
-    <xsl:template match="section[h2[matches(text(),'Reference')]]" priority="1"><!--priority is so there is no ambiguous match with the general section handler-->
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]" priority="1"><!--priority is so there is no ambiguous match with the general section handler-->
         <bib:file>
-            <xsl:apply-templates select="./descendant::li"/>
+            <xsl:apply-templates select="./descendant::li | p"/> <!--kth swedish cs101 has these in p's-->
         </bib:file>
     </xsl:template>
             <!--each work cited should be a bib entry-->
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]/p"> <!--kth swedish cs101 has works cited in p's, and doesn't have links in them thus far-->
+        <bib:entry id="{concat('p',count(./preceding-sibling::*))}"> <!--since no id is provided, making one-->
+            <bib:misc>
+                <bib:note>
+                    <xsl:apply-templates/>
+                </bib:note>
+            </bib:misc>
+        </bib:entry>
+    </xsl:template>
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]/p//*"> <!--want the text and nothing else-->
+        <xsl:apply-templates/>
+    </xsl:template>
+    
                 <!--there are at least two ways works can be formatted wrt where their ids are. Processing both.--> 
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li[a[@name]]" priority="1"> <!--NEEDS IMPROVEMENT. how do I say first child?-->
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]//li[a[@name]]" priority="1"> <!--NEEDS IMPROVEMENT. how do I say first child?-->
         <bib:entry>
             <xsl:attribute name="id"><xsl:value-of select="./a[1]/@name"/></xsl:attribute>
             <!--not currently trying to sort out the pieces/format of the works cited, so they're all misc->note-->
@@ -234,7 +247,7 @@
             </bib:misc>
         </bib:entry>
     </xsl:template>
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li[@id]" priority="1">
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]//li[@id]" priority="1">
         <bib:entry>
             <xsl:attribute name="id"><xsl:value-of select="./@id"/></xsl:attribute>
             <!--not currently trying to sort out the pieces/format of the works cited, so they're all misc->note-->
@@ -252,14 +265,14 @@
                -other a's should have their href content also printed in case the url was not included in text
                -all other descendants we want the bottom-out text of and nothing else
                (the specific ones have higher priority than the general descendent one so they fire when needed)-->
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/span[@title='Return to text above']" priority="1"/>
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li//a[@alt='Return to text above']" priority="1"/>
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a[@name and count(*)=0]" priority="1"/>
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li/a" priority=".9">
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]//li/span[@title='Return to text above']" priority="1"/>
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]//li//a[@alt='Return to text above']" priority="1"/>
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]//li/a[@name and count(*)=0]" priority="1"/>
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]//li/a" priority=".9">
         <xsl:apply-templates/>
         <xsl:text> [</xsl:text><xsl:value-of select="./@href"/><xsl:text>]</xsl:text>
     </xsl:template>
-    <xsl:template match="section[h2[matches(text(),'Reference')]]//li//*">
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]//li//*">
         <xsl:apply-templates/>
     </xsl:template>
         <!--in-text citations-->
