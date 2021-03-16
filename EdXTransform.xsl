@@ -98,6 +98,11 @@
     <!--colgroups (in tables) are only for styling (if I understand correctly), which we don't allow, so removing-->
     <xsl:template match="colgroup"></xsl:template>
     
+    <!--hr-->
+    <xsl:template match="hr"> <!--needing to make a call on how to handle this, decided on asterism atm because it is used for breaks and read as a distinct item by text to speech-->
+        <p>  ⁂</p>
+    </xsl:template>
+    
     <!--bold and italics-->
     <xsl:template match="strong | b">
         <em style="bold"><xsl:apply-templates select="@* | node()"/></em>
@@ -218,11 +223,11 @@
             <!--the reference section should be turned into the bib file-->
     <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]" priority="1"><!--priority is so there is no ambiguous match with the general section handler-->
         <bib:file>
-            <xsl:apply-templates select="./descendant::li | p"/> <!--kth swedish cs101 has these in p's-->
+            <xsl:apply-templates select="./descendant::li | p[text()]"/> <!--kth swedish cs101 has these in p's-->
         </bib:file>
     </xsl:template>
             <!--each work cited should be a bib entry-->
-    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]/p"> <!--kth swedish cs101 has works cited in p's, and doesn't have links in them thus far-->
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]/p[text()]"> <!--kth swedish cs101 has works cited in p's, and doesn't have links in them thus far--> <!--(don't want empty p's)-->
         <bib:entry id="{concat('p',count(./preceding-sibling::*))}"> <!--since no id is provided, making one-->
             <bib:misc>
                 <bib:note>
@@ -231,7 +236,7 @@
             </bib:misc>
         </bib:entry>
     </xsl:template>
-    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]/p//*"> <!--want the text and nothing else-->
+    <xsl:template match="section[(h2|h3)[matches(text(),'Referen[cs]e')]]/p[text()]//*"> <!--want the text and nothing else-->
         <xsl:apply-templates/>
     </xsl:template>
     
@@ -482,4 +487,33 @@
             <xsl:value-of select="."/>
         </caption>
     </xsl:template>
+    
+<!--from KTH Swedish cs101-->
+    <xsl:template match="pre"> <!--they seem to use these for code-->
+        <codeblock syntax="text">
+            <xsl:apply-templates/>
+        </codeblock>
+    </xsl:template>
+    <!--they use these for code that will be run, which we're making into activities. so they should be formatted to input into that-->
+    <xsl:template match="textarea"> 
+        <code style="block">
+            <xsl:text>&lt;textarea</xsl:text>
+            <xsl:for-each select="@*">
+                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:text>="</xsl:text><xsl:value-of select="."/><xsl:text>"</xsl:text>
+            </xsl:for-each>
+            <xsl:apply-templates/><xsl:text>&gt;</xsl:text>    
+            <xsl:text>&lt;/textarea&gt;</xsl:text>
+        </code>
+    </xsl:template>
+    <xsl:template match="input"> 
+        <code style="block">
+            <xsl:text>&lt;input</xsl:text>
+            <xsl:for-each select="@*">
+                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:text>="</xsl:text><xsl:value-of select="."/><xsl:text>"</xsl:text>
+            </xsl:for-each>
+            <xsl:apply-templates/><xsl:text>&gt;</xsl:text>    
+            <xsl:text>&lt;/input&gt;</xsl:text>
+        </code>
+    </xsl:template>
+    
 </xsl:stylesheet>
