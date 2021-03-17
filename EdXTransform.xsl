@@ -127,7 +127,17 @@
             <xsl:attribute name="title"> <!--for accessibility-->
                 <xsl:value-of select="$olipageid"/>
             </xsl:attribute>
-            <xsl:apply-templates select="@*[name()!='href' and name()!='title'] | node()"/> <!--the internal links I saw didn't have titles but in case some do-->
+            <xsl:if test="./@target='_blank'">
+                <xsl:attribute name="target">
+                    <xsl:value-of select="'new'"/>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="./@target='_self'">
+                <xsl:attribute name="target">
+                    <xsl:value-of select="'self'"/>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:apply-templates select="@*[name()!='href' and name()!='title' and name()!='target'] | node()"/> <!--the internal links I saw didn't have titles but in case some do-->
         </activity_link>
     </xsl:template>
     <!--external links-->
@@ -459,7 +469,17 @@
                 <xsl:attribute name="title"> <!--for accessibility-->
                     <xsl:value-of select="$olipageid"/>
                 </xsl:attribute>
-                <xsl:apply-templates select="@*[name()!='href' and name()!='title'] | node()"/> <!--the internal links I saw didn't have titles but in case some do-->
+                <xsl:if test="./@target='_blank'">
+                    <xsl:attribute name="target">
+                        <xsl:value-of select="'new'"/>
+                    </xsl:attribute>
+                </xsl:if>
+                <xsl:if test="./@target='_self'">
+                    <xsl:attribute name="target">
+                        <xsl:value-of select="'self'"/>
+                    </xsl:attribute>
+                </xsl:if>
+                <xsl:apply-templates select="@*[name()!='href' and name()!='title' and name()!='target'] | node()"/> <!--the internal links I saw didn't have titles but in case some do-->
             </activity_link>
         </p>
     </xsl:template>
@@ -489,6 +509,11 @@
     </xsl:template>
     
 <!--from KTH Swedish cs101-->
+    <xsl:template match="pre[node()[not(self::text())]]"> <!--codeblocks may not have other elements in them, so pre's with that should be code instead-->
+        <code style="block">
+            <xsl:apply-templates/>
+        </code>
+    </xsl:template>
     <xsl:template match="pre"> <!--they seem to use these for code-->
         <codeblock syntax="text">
             <xsl:apply-templates/>
