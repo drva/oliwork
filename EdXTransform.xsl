@@ -521,24 +521,34 @@
     </xsl:template>
     <!--they use these for code that will be run, which we're making into activities. so they should be formatted to input into that-->
     <xsl:template match="textarea"> 
-        <code style="block">
+        <codeblock syntax="html">
             <xsl:text>&lt;textarea</xsl:text>
-            <xsl:for-each select="@*">
-                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:text>="</xsl:text><xsl:value-of select="."/><xsl:text>"</xsl:text>
-            </xsl:for-each>
-            <xsl:apply-templates/><xsl:text>&gt;</xsl:text>    
+            <xsl:for-each select="@*"> <!--copies in the attributes. The xsl:choose is needed so that attributes with "s in them get enclosed in ''s-->
+                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>='</xsl:text></xsl:when><xsl:otherwise><xsl:text>="</xsl:text></xsl:otherwise></xsl:choose><xsl:value-of select="."/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>'</xsl:text></xsl:when><xsl:otherwise><xsl:text>"</xsl:text></xsl:otherwise></xsl:choose>
+            </xsl:for-each><xsl:text>&gt;</xsl:text> 
+            <xsl:apply-templates/>   
             <xsl:text>&lt;/textarea&gt;</xsl:text>
-        </code>
+        </codeblock>
     </xsl:template>
     <xsl:template match="input"> 
-        <code style="block">
+        <codeblock syntax="html">
             <xsl:text>&lt;input</xsl:text>
             <xsl:for-each select="@*">
-                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:text>="</xsl:text><xsl:value-of select="."/><xsl:text>"</xsl:text>
-            </xsl:for-each>
-            <xsl:apply-templates/><xsl:text>&gt;</xsl:text>    
+                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>='</xsl:text></xsl:when><xsl:otherwise><xsl:text>="</xsl:text></xsl:otherwise></xsl:choose><xsl:value-of select="."/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>'</xsl:text></xsl:when><xsl:otherwise><xsl:text>"</xsl:text></xsl:otherwise></xsl:choose>
+            </xsl:for-each><xsl:text>&gt;</xsl:text>
+            <xsl:apply-templates/>
             <xsl:text>&lt;/input&gt;</xsl:text>
-        </code>
+        </codeblock>
+    </xsl:template>
+    
+    <xsl:template match="canvas">
+        <!--commenting out the tags but putting the attributes in; leaving the/any contents-->
+        <xsl:text disable-output-escaping="yes">&lt;!--&lt;canvas</xsl:text>
+        <xsl:for-each select="@*">
+            <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:text>="</xsl:text><xsl:value-of select="."/><xsl:text>"</xsl:text>
+        </xsl:for-each><xsl:text disable-output-escaping="yes">&gt;--&gt;</xsl:text>
+        <xsl:apply-templates/>
+        <xsl:text disable-output-escaping="yes">&lt;!--&lt;/canvas&gt;--&gt;</xsl:text>         
     </xsl:template>
     
 </xsl:stylesheet>
