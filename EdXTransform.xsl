@@ -10,7 +10,7 @@
         doctype-public="-//Carnegie Mellon University//DTD Workbook Page 3.8//EN"
         doctype-system="http://oli.web.cmu.edu/dtd/oli_workbook_page_3_8.dtd"
         indent="yes"
-        cdata-section-elements="codeblock"/>
+        cdata-section-elements="codeblock"/> <!--THIS IS HERE TO CORRECTLY FORMAT OUTPUT FOR SOME KTH CODING CONTENT. IT WILL MAKE TEXT CONTENTS OF ALL CODEBLOCKS BE CDATA. TEMPORARILY REMOVE IF NOT WANTED-->
     
     <!--Setting up to find the LO file-->
     <xsl:variable name="fileid" select="workbook_page/@id"/>
@@ -543,24 +543,22 @@
         </codeblock>
     </xsl:template>-->
     
+    <!--textarea/input and image coding need to be in cdata for later processing. cdata-section-elements="codeblock" in xsl:output at the top is part of this--> 
     <xsl:template match="div[@class='runcode']"> <!--this is a wrapper for the textarea/input they seem to have. Will need to check it's consistent-->
         <codeblock syntax="text" highlight="" number="false" start="">
-            <xsl:text disable-output-escaping="yes">&lt;![CDATA[</xsl:text> <!--there is a way to do cdata in xslt but it appears to involve declaring that some elements' content should be cdata at the top, and I don't want *all* codeblocks to do this? Attempting by output escaping-->
-                <xsl:apply-templates select="textarea|input"/> <!--it also has brs and we don't want them-->
-            <xsl:text disable-output-escaping="yes">]]&gt;</xsl:text>
+            <xsl:apply-templates select="textarea|input"/> <!--it also has brs and we don't want them-->
         </codeblock>
     </xsl:template>
     
     <!--image coding activities also need to be in cdata-->
     <xsl:template match="codeblock[contains(.,'image-coding url_name')]">
-        <codeblock syntax="xml" highlight="" number="false" start="">
-            <xsl:text disable-output-escaping="yes">&lt;![CDATA[</xsl:text> 
-                <xsl:apply-templates select="text()"/>
-            <xsl:text disable-output-escaping="yes">]]&gt;</xsl:text>
+        <codeblock syntax="xml" highlight="" number="false" start=""> 
+                <xsl:apply-templates select="text()"/> <!--don't want the comment-->
         </codeblock>
     </xsl:template>
     
-    <xsl:template match="textarea">
+        <!--cdata-section-elements="codeblock" only puts text children in cdata, so borrowing from the old version of the templates to have textarea and input be text-->
+    <xsl:template match="div[@class='runcode']/textarea">
             <xsl:text>&lt;textarea</xsl:text>
             <xsl:for-each select="@*"> <!--copies in the attributes. The xsl:choose is needed so that attributes with "s in them get enclosed in ''s-->
                 <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>='</xsl:text></xsl:when><xsl:otherwise><xsl:text>="</xsl:text></xsl:otherwise></xsl:choose><xsl:value-of select="."/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>'</xsl:text></xsl:when><xsl:otherwise><xsl:text>"</xsl:text></xsl:otherwise></xsl:choose>
@@ -568,7 +566,7 @@
             <xsl:apply-templates/>   
             <xsl:text>&lt;/textarea&gt;</xsl:text>       
     </xsl:template>
-    <xsl:template match="input"> 
+    <xsl:template match="div[@class='runcode']/input"> 
             <xsl:text>&lt;input</xsl:text>
             <xsl:for-each select="@*">
                 <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>='</xsl:text></xsl:when><xsl:otherwise><xsl:text>="</xsl:text></xsl:otherwise></xsl:choose><xsl:value-of select="."/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>'</xsl:text></xsl:when><xsl:otherwise><xsl:text>"</xsl:text></xsl:otherwise></xsl:choose>
