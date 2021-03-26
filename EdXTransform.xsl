@@ -520,10 +520,11 @@
         </codeblock>
     </xsl:template>
     <!--they use these for code that will be run, which we're making into activities. so they should be formatted to input into that-->
-    <xsl:template match="textarea"> 
+        <!--turns out it needs to be in a somewhat different format, commenting out old version-->
+    <!--<xsl:template match="textarea"> 
         <codeblock syntax="html">
             <xsl:text>&lt;textarea</xsl:text>
-            <xsl:for-each select="@*"> <!--copies in the attributes. The xsl:choose is needed so that attributes with "s in them get enclosed in ''s-->
+            <xsl:for-each select="@*"> <!-copies in the attributes. The xsl:choose is needed so that attributes with "s in them get enclosed in ''s->
                 <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>='</xsl:text></xsl:when><xsl:otherwise><xsl:text>="</xsl:text></xsl:otherwise></xsl:choose><xsl:value-of select="."/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>'</xsl:text></xsl:when><xsl:otherwise><xsl:text>"</xsl:text></xsl:otherwise></xsl:choose>
             </xsl:for-each><xsl:text>&gt;</xsl:text> 
             <xsl:apply-templates/>   
@@ -539,6 +540,27 @@
             <xsl:apply-templates/>
             <xsl:text>&lt;/input&gt;</xsl:text>
         </codeblock>
+    </xsl:template>-->
+    
+    <xsl:template match="div[@class='runcode']"> <!--this is a wrapper for the textarea/input they seem to have. Will need to check it's consistent-->
+        <codeblock syntax="text" highlight="" number="false" start="">
+            <xsl:text disable-output-escaping="yes">&lt;![CDATA[</xsl:text> <!--there is a way to do cdata in xslt but it appears to involve declaring that some elements' content should be cdata at the top, and I don't want *all* codeblocks to do this? Attempting by output escaping-->
+                <xsl:apply-templates select="textarea|input"/> <!--it also has brs and we don't want them-->
+            <xsl:text disable-output-escaping="yes">]]&gt;</xsl:text>
+        </codeblock>
+    </xsl:template>
+    
+    <!--image coding activities also need to be in cdata-->
+    <xsl:template match="codeblock[contains(.,'image-coding url_name')]">
+        <codeblock syntax="xml" highlight="" number="false" start="">
+            <xsl:text disable-output-escaping="yes">&lt;![CDATA[</xsl:text> 
+                <xsl:apply-templates select="text()"/>
+            <xsl:text disable-output-escaping="yes">]]&gt;</xsl:text>
+        </codeblock>
+    </xsl:template>
+    
+    <xsl:template match="textarea/text()|codeblock[contains(.,'image-coding url_name')]/text()">
+        <xsl:value-of select="replace(.,'&lt;',codepoints-to-string((60)))"/>
     </xsl:template>
     
     <xsl:template match="canvas">
