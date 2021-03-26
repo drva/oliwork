@@ -9,7 +9,8 @@
         method="xml" 
         doctype-public="-//Carnegie Mellon University//DTD Workbook Page 3.8//EN"
         doctype-system="http://oli.web.cmu.edu/dtd/oli_workbook_page_3_8.dtd"
-        indent="yes"/>
+        indent="yes"
+        cdata-section-elements="codeblock textarea input"/>
     
     <!--Setting up to find the LO file-->
     <xsl:variable name="fileid" select="workbook_page/@id"/>
@@ -557,10 +558,6 @@
                 <xsl:apply-templates select="text()"/>
             <xsl:text disable-output-escaping="yes">]]&gt;</xsl:text>
         </codeblock>
-    </xsl:template>
-    
-    <xsl:template match="textarea/text()|codeblock[contains(.,'image-coding url_name')]/text()">
-        <xsl:value-of select="replace(.,'&lt;',codepoints-to-string((60)))"/>
     </xsl:template>
     
     <xsl:template match="canvas">
