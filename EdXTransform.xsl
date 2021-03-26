@@ -10,7 +10,7 @@
         doctype-public="-//Carnegie Mellon University//DTD Workbook Page 3.8//EN"
         doctype-system="http://oli.web.cmu.edu/dtd/oli_workbook_page_3_8.dtd"
         indent="yes"
-        cdata-section-elements="codeblock textarea input"/>
+        cdata-section-elements="codeblock"/>
     
     <!--Setting up to find the LO file-->
     <xsl:variable name="fileid" select="workbook_page/@id"/>
@@ -558,6 +558,23 @@
                 <xsl:apply-templates select="text()"/>
             <xsl:text disable-output-escaping="yes">]]&gt;</xsl:text>
         </codeblock>
+    </xsl:template>
+    
+    <xsl:template match="textarea">
+            <xsl:text>&lt;textarea</xsl:text>
+            <xsl:for-each select="@*"> <!--copies in the attributes. The xsl:choose is needed so that attributes with "s in them get enclosed in ''s-->
+                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>='</xsl:text></xsl:when><xsl:otherwise><xsl:text>="</xsl:text></xsl:otherwise></xsl:choose><xsl:value-of select="."/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>'</xsl:text></xsl:when><xsl:otherwise><xsl:text>"</xsl:text></xsl:otherwise></xsl:choose>
+            </xsl:for-each><xsl:text>&gt;</xsl:text> 
+            <xsl:apply-templates/>   
+            <xsl:text>&lt;/textarea&gt;</xsl:text>       
+    </xsl:template>
+    <xsl:template match="input"> 
+            <xsl:text>&lt;input</xsl:text>
+            <xsl:for-each select="@*">
+                <xsl:text> </xsl:text><xsl:value-of select="./name()"/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>='</xsl:text></xsl:when><xsl:otherwise><xsl:text>="</xsl:text></xsl:otherwise></xsl:choose><xsl:value-of select="."/><xsl:choose><xsl:when test="contains(.,'&quot;')"><xsl:text>'</xsl:text></xsl:when><xsl:otherwise><xsl:text>"</xsl:text></xsl:otherwise></xsl:choose>
+            </xsl:for-each><xsl:text>&gt;</xsl:text>
+            <xsl:apply-templates/>
+            <xsl:text>&lt;/input&gt;</xsl:text>       
     </xsl:template>
     
     <xsl:template match="canvas">
