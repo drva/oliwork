@@ -42,16 +42,21 @@
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
                     <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
-                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
+                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::imageresponse or self::solution or self::demandhint)]"/>
                     
                     <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
                     <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup or self::solution)]"/>
                     <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup or self::solution)]"/>
                     <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer or self::solution)]"/>
                     <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint or self::solution)]"/>
+                    <!--\/encountered in kth ramp-->
+                    <xsl:apply-templates select="imageresponse/node()[not(self::imageinput or self::solution)]"/>
+                    <xsl:if test="imageresponse">
+                        <p><em style="italic">Image description: <xsl:value-of select="imageresponse/imageinput/@alt"/></em></p> <!--our image hotspots apparently don't allow alt?-->
+                    </xsl:if>
                     <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
                 </body>
-                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse"/>
+                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|imageresponse"/>
                 <xsl:apply-templates select ="optionresponse" mode="choices"/> <!--bc of how optionresponse is put together differently, it's also dealt with somewhat differently-->
                 <xsl:apply-templates select ="optionresponse" mode="feedback"/>
             </question>
@@ -74,7 +79,7 @@
                         </xsl:otherwise>
                     </xsl:choose>
                 </title>   
-                <xsl:apply-templates/>
+                <xsl:apply-templates select="*[not(self::demandhint)] | //solution"/> <!--hints are pulled into the individual questions, don't go here--><!--I think adding solution like this should pull them in at the right points if there are several for different questions so they don't all go in the end-->
             </assessment>
         </xsl:result-document>
     </xsl:template>
@@ -83,18 +88,27 @@
             <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename, '_',string(count(preceding-sibling::*)))"/></xsl:attribute> <!--it is not allowed to be identical to the filename--> <!--here also need to be numbered, since there's more than one-->
             <body>
                 <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
-                <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::solution or self::demandhint)]"/>
+                <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::imageresponse or self::solution or self::demandhint)]"/>
                 
                 <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
-<!--NOTE: atm the below different from singlet processing, which has  or self::solution in all of these. as of kth ramp i have only seen solution in multipart at the end, where it ends up outside of qs. Keep this like this so if there is one in a q I notice-->               
-                <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup)]"/>
-                <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup)]"/>
-                <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer)]"/>
-                <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint)]"/>
+                <!--ran into some multiparts with solution inside a question, so like in singlet processing it's now excluded so as not to end up in the wrong place. Placing solutions in the right place handled in the top level template above.-->
+                <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup or self::solution)]"/>
+                <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup or self::solution)]"/>
+                <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer or self::solution)]"/>
+                <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint or self::solution)]"/>
+                <!--\/encountered in kth ramp (haven't seen any in multiples yet but keeping synchronized)-->
+                <xsl:apply-templates select="imageresponse/node()[not(self::imageinput or self::solution)]"/>
                 <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
             </body>
-            <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse"/>
+            <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|imageresponse"/>
         </question>
+    </xsl:template>
+    <xsl:template match="problem[q]/*[not(self::q or self::solution or self::demandhint)]"> <!--stuff that is not handled seperately should be put in content tags so it doesn't end up bare in assessment which is not allowed-->
+        <content>
+            <xsl:copy>
+                <xsl:apply-templates/>
+            </xsl:copy>
+        </content>
     </xsl:template>
     
     <!--<xsl:template match="problem[//optionresponse]"> <!-being treated seperately because it is put together differently->
@@ -437,6 +451,32 @@
                 <feedback>Incorrect.</feedback>
             </response>
             <xsl:apply-templates select="//demandhint"/> <!--haven't seen any of these yet but extrapolating-->
+        </part>
+    </xsl:template>
+    
+    <!--imageresponse/image hotspot-->
+        <!--looking at kth ramp i-->
+    <xsl:template match="imageresponse">
+        <xsl:apply-templates select="imageinput"/>
+    </xsl:template>
+    <xsl:template match="imageinput">
+        <image_hotspot>
+            <xsl:attribute name="src"><xsl:value-of select="concat('..',replace(./@src,'static','webcontent'))"/></xsl:attribute>
+            <xsl:apply-templates select="@height | @width"/> <!--not sure if these height and width need to be rounded and size is important here so currently not rounding--> <!--alt isn't here bc apparently we don't allow it-->
+            <xsl:if test="./@rectangle"> <!--will need to handle multiple rectangles, and region, if I encounter them-->
+                <hotspot value="rectangle" shape="rect" coords="119,64,236,204">
+                    <xsl:attribute name="coords"><xsl:value-of select="replace(replace(./@rectangle,'\)|\(',''),'-',',')"/></xsl:attribute> <!--converting the coordinates to how we format them-->
+                    Rectangle
+                </hotspot>               
+            </xsl:if>
+        </image_hotspot>
+        <part>
+            <response match="rectangle" score="{$points}">
+                <feedback>Correct!</feedback>
+            </response>
+            <response match="*" score="0">
+                <feedback>Incorrect.</feedback>
+            </response>
         </part>
     </xsl:template>
     
