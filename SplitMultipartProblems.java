@@ -19,6 +19,8 @@ public class SplitMultipartProblems
 	public static Pattern pattern;
 	public static Matcher matcher;
 	public static HashSet<String> problemTypes;
+	public static String numericTag = "numericalresponse";
+	public static String fillInBlankTag = "optionresponse";
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -55,6 +57,11 @@ public class SplitMultipartProblems
 		int numbegins = 0;
 		int numends = 0;
 		int startOfLastBegin = 0;
+		//numerics and optionresponses/fill in the blanks with multiple parts are a different sort of case and will get processed with singlets. So need to catch them.
+		//if I run into multipart text response will need to add here.
+		//(note, if something is supposed to be a multipart numeric and then have other question types it'll be still taken as a general multipart. Leaving it that way, hopefully any issues will be back-up handled by content tag wrapping now present in the xslt.) 
+		boolean allNumeric = true;
+		boolean allOption = true;
 		
 		while(fromAFile.hasNext())
 			fileText=fileText+fromAFile.nextLine()+"\n";
@@ -68,6 +75,12 @@ public class SplitMultipartProblems
 			numbegins++;
 			startOfLastBegin = matcher.start(); //this should end with it being the start of the last opening tag
 			problemTypes.add(matcher.group("tagname"));
+			
+			//this this is not a numeric then they're not all numerics; if it's not an optionresponse then they're not all that.
+			if(!matcher.group("tagname").equals(numericTag))
+				allNumeric = false;
+			if(!matcher.group("tagname").equals(fillInBlankTag))
+				allOption = false;
 		}
 		
 		pattern = Pattern.compile(problemPartEndRegex);
@@ -83,11 +96,23 @@ public class SplitMultipartProblems
 		{
 			System.out.println("!Tag number mismatch: "+filename);
 		}
-		else if(numbegins==1) //so this is not a multipart problem, so just copy file over.
+		else if(numbegins==1) //so this is not a multipart problem, so just copy file over. 
+		{
+			PrintWriter toAFile = new PrintWriter(new File(destinationDirectory+"/"+putSingletsHere+"/"+filename));
+
+			toAFile.print(fileText);
+			toAFile.close();
+		}
+		else if(numbegins>1 && (allNumeric || allOption)) //All-numerics and all-optionresponses also go with singlets.
 		{
 			PrintWriter toAFile = new PrintWriter(new File(destinationDirectory+"/"+putSingletsHere+"/"+filename));
 			toAFile.print(fileText);
 			toAFile.close();
+			//want to note all-numerics and all-optionresponses
+			if(allNumeric)
+				System.out.println("Multi-part numeric: " +filename);
+			if(allOption)
+				System.out.println("Multi-part fill in the blank: " +filename);
 		}
 		else if(numbegins>1) //this is a multipart, so we want to use q tags to separate the multiple parts
 		{
