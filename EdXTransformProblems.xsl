@@ -42,12 +42,16 @@
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
                     <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
-                    <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::imageresponse or self::solution or self::demandhint)]"/>
+                    <xsl:if test="not(count(//numericalresponse)>1)"> <!--multipart numericals need to be handled differently and thus seperately-->
+                        <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::imageresponse or self::solution or self::demandhint)]"/>
+                    </xsl:if>
                     
                     <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
                     <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup or self::solution)]"/>
                     <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup or self::solution)]"/>
-                    <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer or self::solution)]"/>
+                    <xsl:if test="not(count(//numericalresponse)>1)"> <!--multipart numericals need to be handled differently and thus seperately-->
+                        <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer or self::solution)]"/>
+                    </xsl:if>
                     <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint or self::solution)]"/>
                     <!--\/encountered in kth ramp-->
                     <xsl:apply-templates select="imageresponse/node()[not(self::imageinput or self::solution)]"/>
@@ -55,8 +59,15 @@
                         <p><em style="italic">Image description: <xsl:value-of select="imageresponse/imageinput/@alt"/></em></p> <!--our image hotspots apparently don't allow alt?-->
                     </xsl:if>
                     <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
+                    
+                    <!--for multipart numeric-->
+                    <xsl:if test="count(//numericalresponse)>1">
+                        <xsl:apply-templates select="*[not(self::solution or self::demandhint)]"/> <!--only one apply-templates call so as not to end up with duplicate inputrefs-->
+                    </xsl:if>
                 </body>
-                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|imageresponse"/>
+                <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|imageresponse"/>
+                <xsl:apply-templates select="numericalresponse" mode="fields"/> <!--bc of needing to handle multipart numerics, numerical template has been split into multiple pieces and uses modes since the 'default' is being used to do inputrefs in body for the multiparts-->
+                <xsl:apply-templates select="numericalresponse" mode="parts"/>
                 <xsl:apply-templates select ="optionresponse" mode="choices"/> <!--bc of how optionresponse is put together differently, it's also dealt with somewhat differently-->
                 <xsl:apply-templates select ="optionresponse" mode="feedback"/>
             </question>
@@ -100,7 +111,9 @@
                 <xsl:apply-templates select="imageresponse/node()[not(self::imageinput or self::solution)]"/>
                 <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
             </body>
-            <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|numericalresponse|imageresponse"/>
+            <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|imageresponse"/>
+            <xsl:apply-templates select="numericalresponse" mode="fields"/> <!--bc of needing to handle multipart numerics, numerical template has been split into multiple pieces and uses modes since the 'default' is being used to do inputrefs in body for the multiparts-->
+            <xsl:apply-templates select="numericalresponse" mode="parts"/>
         </question>
     </xsl:template>
     <xsl:template match="problem[q]/*[not(self::q or self::solution or self::demandhint)]"> <!--stuff that is not handled seperately should be put in content tags so it doesn't end up bare in assessment which is not allowed-->
@@ -421,10 +434,28 @@
     </xsl:template>
     
     <!--numeric (looking at kth#2)-->
+        <!--(looking at kth rampii) adding for handling multipart numerics; previous template is now broken up in two (again for multipart purposes) with modes to be called at the right time. The 'default' template is now the immediately below, used for multipart numerics-->
     <xsl:template match="numericalresponse">
-        <numeric id="field"/> <!--don't think this id matters for anything, looking at diana's course examples?-->
+        <xsl:apply-templates select="*[not(self::responseparam or self::additional_answer or self::solution)]"/> <!--formulaequationinput will be used for inputrefs; if there's other content it's problem content and should be kept, other elements are dealt with in later parts and not relevant here-->
+    </xsl:template>
+    <xsl:template match="formulaequationinput">
+        <input_ref input="{concat('in_',count(preceding::formulaequationinput))}"/> <!--attribute will need to be matched to corresponding ones in other parts, and needs a system to enable that.-->  
+    </xsl:template>
+    
+    <xsl:template match="numericalresponse" mode="fields">
+        <numeric id="{concat('in_',./formulaequationinput/count(preceding::formulaequationinput))}"/> <!--in multiparts attribute needs to match to its inputref-->
+    </xsl:template>
+    <xsl:template match="numericalresponse" mode="parts">
+        <!--in multipart numerics responses need an extra attribute to math to their inputref (this will only be used in multipart numerics but can't be in an if for scope reasons)-->
+        <xsl:variable name="inputid" select="concat('in_',./formulaequationinput/count(preceding::formulaequationinput))"/>
+        
         <part>
             <response score="1" match="{./@answer}"> <!--diana's example put exact answer and range seperately and that seems like a good idea even if they have the same point value-->
+                <xsl:if test="count(//numericalresponse)>1">
+                    <xsl:attribute name="input">
+                        <xsl:value-of select="$inputid"/>
+                    </xsl:attribute>
+                </xsl:if>
                 <feedback>Correct!</feedback>
             </response> 
             <xsl:choose> <!--if there's an acceptable range, need to accept answers within it-->
@@ -442,12 +473,22 @@
                                 </xsl:otherwise>
                             </xsl:choose>
                         </xsl:attribute>
+                        <xsl:if test="count(//numericalresponse)>1">
+                            <xsl:attribute name="input">
+                                <xsl:value-of select="$inputid"/>
+                            </xsl:attribute>
+                        </xsl:if>
                         <feedback>Correct!</feedback>
                     </response>
                 </xsl:when>
             </xsl:choose>
             <xsl:apply-templates select="additional_answer"/> <!--I *think* these are other correct answers?-->
             <response match="*">
+                <xsl:if test="count(//numericalresponse)>1">
+                    <xsl:attribute name="input">
+                        <xsl:value-of select="$inputid"/>
+                    </xsl:attribute>
+                </xsl:if>
                 <feedback>Incorrect.</feedback>
             </response>
             <xsl:apply-templates select="//demandhint"/> <!--haven't seen any of these yet but extrapolating-->
