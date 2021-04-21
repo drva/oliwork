@@ -76,7 +76,7 @@ public class SplitMultipartProblems
 			startOfLastBegin = matcher.start(); //this should end with it being the start of the last opening tag
 			problemTypes.add(matcher.group("tagname"));
 			
-			//this this is not a numeric then they're not all numerics; if it's not an optionresponse then they're not all that.
+			//if this is not a numeric then they're not all numerics; if it's not an optionresponse then they're not all that.
 			if(!matcher.group("tagname").equals(numericTag))
 				allNumeric = false;
 			if(!matcher.group("tagname").equals(fillInBlankTag))
