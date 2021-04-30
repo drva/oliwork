@@ -1,6 +1,10 @@
 
 # ==CONTENT==
 
+# make the videos file if there are videos
+
+# convert transcripts if there are transcripts
+
 # Run the main java converter
 
 # Convert LO's, if they exist
@@ -12,6 +16,8 @@
 # (Optional) process errors from the above
 
 # Make the protooutline into an outline
+
+# (Optional) make placeholder activities
 
 # Run inline activity java if needed (not needed for activities any more, still needed for submit and compare)
 
