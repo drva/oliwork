@@ -62,7 +62,7 @@
                     
                     <!--for multipart numeric-->
                     <xsl:if test="count(//numericalresponse)>1">
-                        <xsl:apply-templates select="*[not(self::solution or self::demandhint)]"/> <!--only one apply-templates call so as not to end up with duplicate inputrefs-->
+                        <xsl:apply-templates select="*[not(self::solution or self::demandhint)]"/> <!--only one apply-templates call so as not to end up with duplicate inputrefs |since I need to grab what converts into inputref in either problem structure condition to get it in the right place, but if I do both I'd get duplicates|-->
                     </xsl:if>
                 </body>
                 <xsl:apply-templates select ="multiplechoiceresponse|choiceresponse|stringresponse|imageresponse"/>
