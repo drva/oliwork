@@ -42,16 +42,18 @@
                 <xsl:attribute name="id"><xsl:value-of select="concat('aQ_', $filename)"/></xsl:attribute> <!--it is not allowed to be identical to the filename-->
                 <body>
                     <!--the edx problems have everything in one element while we have body for problem wording etc, so need to seperate them out-->
-                    <xsl:if test="not(count(//numericalresponse)>1)"> <!--multipart numericals need to be handled differently and thus seperately-->
+                    <!--<xsl:if test="not(count(//numericalresponse)>1)"> <!-multipart numericals need to be handled differently and thus seperately->-->
+                    <xsl:if test="not(numericalresponse)"> <!--this was originally for seperating out multipart numerics, handled seperately, but now all numerics are being handled separately in order to correctly deal with answer locations in the middle of question text-->
                         <xsl:apply-templates select="*[not(self::multiplechoiceresponse or self::choiceresponse or self::stringresponse or self::numericalresponse or self::imageresponse or self::solution or self::demandhint)]"/>
                     </xsl:if>
                     
                     <!--kth#2 has a bunch of problems where problem body content is *inside* the relevant question type tag. I need to get it put into body. (this makes the commented out piece below unnecessary as this fulfills the function it previously was, so it is commented out)-->
                     <xsl:apply-templates select="multiplechoiceresponse/node()[not(self::choicegroup or self::solution)]"/>
                     <xsl:apply-templates select="choiceresponse/node()[not(self::checkboxgroup or self::solution)]"/>
-                    <xsl:if test="not(count(//numericalresponse)>1)"> <!--multipart numericals need to be handled differently and thus seperately-->
+                        <!--\/this was originally for seperating out multipart numerics, handled seperately, but now all numerics are being handled separately in order to correctly deal with answer locations in the middle of question text-->
+                    <!--<xsl:if test="not(count(//numericalresponse)>1)"> <!-multipart numericals need to be handled differently and thus seperately->
                         <xsl:apply-templates select="numericalresponse/node()[not(self::responseparam or self::formulaequationinput or self::additional_answer or self::solution)]"/>
-                    </xsl:if>
+                    </xsl:if>-->
                     <xsl:apply-templates select="stringresponse/node()[not(self::textline or self::correcthint or self::additional_answer or self::stringequalhint or self::solution)]"/>
                     <!--\/encountered in kth ramp-->
                     <xsl:apply-templates select="imageresponse/node()[not(self::imageinput or self::solution)]"/>
@@ -60,8 +62,9 @@
                     </xsl:if>
                     <!--<xsl:apply-templates select = "multiplechoiceresponse/label"/>--> <!--some kth problems have problem body like this-->
                     
-                    <!--for multipart numeric-->
-                    <xsl:if test="count(//numericalresponse)>1">
+                    <!--now for all numerics (originally for multipart numeric)-->
+                    <!--<xsl:if test="count(//numericalresponse)>1">-->
+                    <xsl:if test="numericalresponse">
                         <xsl:apply-templates select="*[not(self::solution or self::demandhint)]"/> <!--only one apply-templates call so as not to end up with duplicate inputrefs |since I need to grab what converts into inputref in either problem structure condition to get it in the right place, but if I do both I'd get duplicates|-->
                     </xsl:if>
                 </body>
