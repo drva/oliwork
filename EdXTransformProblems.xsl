@@ -425,6 +425,20 @@
             </feedback>
         </response>
     </xsl:template>
+    <xsl:template match="additional_answer" mode="withinputid"> <!--if inputid is being used, like in numericals now, it needs to be passed through to here-->
+        <xsl:param name="inputid" tunnel="yes"/> <!--https://stackoverflow.com/questions/2167444/xsl-passing-variables-between-templates-->
+        <response score="1">
+            <xsl:attribute name="match">
+                <xsl:value-of select="./@answer"/>
+            </xsl:attribute>
+            <xsl:attribute name="input">
+                <xsl:value-of select="$inputid"/>
+            </xsl:attribute>
+            <feedback>
+                <xsl:text>Correct! </xsl:text><xsl:apply-templates/>
+            </feedback>
+        </response>
+    </xsl:template>
     <xsl:template match="stringequalhint">
         <response score="0">
             <xsl:attribute name="match">
@@ -485,7 +499,9 @@
                     </response>
                 </xsl:when>
             </xsl:choose>
-            <xsl:apply-templates select="additional_answer"/> <!--I *think* these are other correct answers?-->
+            <xsl:apply-templates select="additional_answer" mode="withinputid"> <!--I *think* these are other correct answers?-->
+                <xsl:with-param name="inputid" select="$inputid" tunnel="yes"/> <!-- need to pass the inputid for it to be used https://stackoverflow.com/questions/2167444/xsl-passing-variables-between-templates-->
+            </xsl:apply-templates>
             <response match="*">
                 <xsl:if test="count(//numericalresponse)>1">
                     <xsl:attribute name="input">
