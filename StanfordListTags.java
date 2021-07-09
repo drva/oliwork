@@ -6,12 +6,15 @@ import java.util.HashSet;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.ArrayList;
 
 public class StanfordListTags
 {
 	public static Pattern pattern;
 	public static Matcher matcher;
 	public static String tagRegex="<(?<tagname>[^\\s\\/>]+)[\\S\\s]*?>";
+	public static String xblockRegex="(?<toprint>[\\S\\s]*?xblock[\\S]*)[\\s]*[\\S\\s]*"; //toprint should thus contain everything before the line says xblock, and then anything through the next whitespace after
+	public static ArrayList<String> xblockSearch = new ArrayList<String>(); //an ArrayList for xblock search stuff
 	
 	public static void main(String[] args) throws IOException
 	{
@@ -23,6 +26,7 @@ public class StanfordListTags
 		HashSet<String> chapterTags = new HashSet<String>();
 		HashSet<String> seqTags = new HashSet<String>();
 		HashSet<String> verticalTags = new HashSet<String>();
+		
 		
 		//get the lists of files to process
 		File[] contentFiles = new File(args[0]+"/html").listFiles(); //https://stackoverflow.com/questions/4917326/how-to-iterate-over-the-files-of-a-certain-directory-in-java
@@ -90,6 +94,11 @@ public class StanfordListTags
 		problemTags.forEach((String name) -> {
             System.out.println(name);
         });
+        
+        System.out.println();
+        System.out.println("## xblock potential");
+        for(int i=0; i<xblockSearch.size(); i++)
+        	System.out.println(xblockSearch.get(i));
 	}
 	
 	public static void processFile(File inputFile, HashSet<String> tagSet) throws IOException
@@ -97,7 +106,7 @@ public class StanfordListTags
 		Scanner fromAFile = new Scanner(inputFile);
 		String hold="";
 		
-		//go through the file looking for tags.
+		//go through the file looking for tags and xblock stuff.
 		while(fromAFile.hasNext())
 		{
 			hold=fromAFile.nextLine();
@@ -107,6 +116,15 @@ public class StanfordListTags
 			while(matcher.find())
 			{
 				tagSet.add(matcher.group("tagname"));
+			}
+			
+			//at the moment for xblock just searching one per line
+			if(hold.matches(xblockRegex))
+			{
+				pattern=Pattern.compile(xblockRegex);
+				matcher = pattern.matcher(hold);
+				matcher.matches();
+				xblockSearch.add(matcher.group("toprint"));
 			}
 		}
  
