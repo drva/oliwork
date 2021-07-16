@@ -1,5 +1,6 @@
 //args[0] is the directory of the course you want to do this for
 //args[1] is redact for leaving out tags I've processed; all (or anything else) for leaving them 
+//args[2] is nc for leaving out things inside comments, anything else for keeping them
 
 import java.io.*;
 import java.util.Scanner;
@@ -17,11 +18,19 @@ public class StanfordListTags
 	public static String tagRegex="<(?<tagname>[^\\s\\/>]+)[\\S\\s]*?>";
 	public static String xblockRegex="(?<toprint>[\\S\\s]*?xblock[\\S]*)[\\s]*[\\S\\s]*"; //toprint should thus contain everything before the line says xblock, and then anything through the next whitespace after
 	public static ArrayList<String> xblockSearch = new ArrayList<String>(); //an ArrayList for xblock search stuff
+	public static String processedTags="ProcessedTags"; //directory where lists of these are, currently hardcoding.
+	public static String oneLineCommentRegex="<!--[\\S\\s]*?-->";
+	public static String beginCommentRegex="<!--";
+	public static String endCommentRegex="-->";
+	public static Boolean removeComments=false;
 	
 	public static void main(String[] args) throws IOException
 	{
 		if(args[1].equals("redact"))
 			redact=true;
+		if(args[2].equals("nc"))
+			removeComments=true;	
+		
 		
 		//hash set will be used to keep track of the tags encountered
 		HashSet<String> contentTags = new HashSet<String>();
@@ -80,12 +89,20 @@ public class StanfordListTags
 			ArrayList<String> seqProcessed = new ArrayList<String>();
 			ArrayList<String> verticalProcessed = new ArrayList<String>();
 			
+			//get the list of tags to leave out from their files.
+			getProcessedTags(contentProcessed, "content");
+			getProcessedTags(problemProcessed, "problem");
+			getProcessedTags(courseProcessed, "course");
+			getProcessedTags(chapterProcessed, "chapter");
+			getProcessedTags(seqProcessed, "sequential");
+			getProcessedTags(verticalProcessed, "vertical");
+			
 			//for testing the process before I actually write the code to read this in from files.
-			contentProcessed.add("p");
+			/*contentProcessed.add("p");
 			problemProcessed.add("numericalresponse");
 			problemProcessed.add("demandhint");
 			courseProcessed.add("chapter");
-			seqProcessed.add("vertical");
+			seqProcessed.add("vertical");*/
 			
 			redactProcessed(contentTags, contentProcessed);
 			redactProcessed(problemTags, problemProcessed);
@@ -135,11 +152,28 @@ public class StanfordListTags
 	{
 		Scanner fromAFile = new Scanner(inputFile);
 		String hold="";
+		Boolean insideCommentIgnore=false;
 		
 		//go through the file looking for tags and xblock stuff.
 		while(fromAFile.hasNext())
 		{
 			hold=fromAFile.nextLine();
+			
+			//if we're leaving out things inside comments, take care of that.
+			if(removeComments)
+			{
+				//if there are comments contained entirely in this line, get rid of that part of the line, keeping everything else (I was worried this would cause problems with something like <tag<!--comment-->attribute> but actually that's not allowed)
+				pattern=Pattern.compile(oneLineCommentRegex);
+				matcher=pattern.matcher(hold);
+				while(matcher.find())
+				{
+					//System.out.println("comment: "+hold); this and two lines below used for testing
+					hold=hold.substring(0,matcher.start())+hold.substring(matcher.end());
+					//System.out.println("removed: "+hold);	
+				}
+				
+			}
+			
 			pattern = Pattern.compile(tagRegex);
 			matcher = pattern.matcher(hold);
 						
@@ -166,5 +200,20 @@ public class StanfordListTags
 		//tags that are in the toRedact list get removed from the taglist set.
 		for(int i=0; i<toRedact.size(); i++)
 			tagSet.remove(toRedact.get(i));
+	}
+	
+	public static void getProcessedTags(ArrayList<String> tags, String filename) throws IOException
+	{
+		//get the file
+		Scanner fromAFile = new Scanner(new File(processedTags+"/"+filename+".txt"));
+		
+		String hold="";
+		while(fromAFile.hasNext())
+		{
+			hold=fromAFile.nextLine();
+			tags.add(hold.split("\\s")[0]); //since tags can't have whitespace, splitting off anything after whitespace so the files can have notes
+		}
+	
+		fromAFile.close();
 	}
 }
