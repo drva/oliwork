@@ -167,11 +167,44 @@ public class StanfordListTags
 				matcher=pattern.matcher(hold);
 				while(matcher.find())
 				{
-					//System.out.println("comment: "+hold); this and two lines below used for testing
+					//System.out.println("comment: "+hold); this and line two lines below used for testing
 					hold=hold.substring(0,matcher.start())+hold.substring(matcher.end());
 					//System.out.println("removed: "+hold);	
 				}
 				
+				//multiline comments (this should handle a comment ending and then another one starting correctly also)
+					//if the line has the end of a comment (which, because of the previous removal, cannot have started on the same line), keep the part after the comment ends and mark not being in a comment anymore.
+				int end=-1;
+				pattern=Pattern.compile(endCommentRegex);
+				matcher=pattern.matcher(hold);
+				while(matcher.find())
+				{
+					end=matcher.end(); //there should not be more than one, but if there were we'd want the last one
+				}
+				if(end != -1)
+				{
+					//System.out.println("comment: "+hold);
+					hold=hold.substring(end);
+					insideCommentIgnore=false;
+					//System.out.println("removed: "+hold);
+				}
+					//if we're inside a comment, don't want to search this line's contents (don't want this to apply to lines where comments start or end, which can still have other content, and due to ordering it should not).
+				if(insideCommentIgnore)
+				{
+					//System.out.println("comment: "+hold);
+					hold="";
+					//System.out.println("removed: "+hold);
+				}
+					//if the line has the beginning of a comment (which, because of earlier removal, cannot end on the same line), keep the part before the comment starts and mark being inside a comment from now on.
+				pattern=Pattern.compile(beginCommentRegex);
+				matcher=pattern.matcher(hold);
+				if(matcher.find())
+				{
+					//System.out.println("comment: "+hold);
+					hold=hold.substring(0,matcher.start());
+					insideCommentIgnore=true;
+					//System.out.println("removed: "+hold);
+				}		
 			}
 			
 			pattern = Pattern.compile(tagRegex);
