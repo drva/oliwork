@@ -24,6 +24,13 @@
         </xsl:copy>
     </xsl:template>
     
+    <!--ran into some problems (in 21-8-12 but were prob some in KTH many I hadn't gone through yet) that have a problem inside a problem, which cause transformation failures bc of problem being what writes to the output doc.
+        If there's a problem inside a problem, strip the outer one.
+        (if I start handling attributes of problem, will want to add things for that, since those seem to generally be on the outer one.)-->
+    <xsl:template match="problem[problem]">
+        <xsl:apply-templates/>
+    </xsl:template>
+    
     <xsl:template match="problem"> <!--Currently not handling any of the attributes of problem-->
         <xsl:result-document href="{concat('a_',$filename, '.xml')}"> <!--https://www.oxygenxml.com/forum/topic7987.html-->
         <assessment>
@@ -624,4 +631,7 @@
     <xsl:template match="library_content/problem">
         <inline idref="{concat('a_',./@url_name)}"/> <!--this should be wb:inline but that causes namespace problems and since I will need an extra script anyway that will be handled there-->
     </xsl:template>
+    
+    <!--we do not allow style attributes.--> 
+    <xsl:template match="@style"></xsl:template>
 </xsl:stylesheet>
