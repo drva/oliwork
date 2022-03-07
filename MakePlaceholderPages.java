@@ -43,10 +43,28 @@ public class MakePlaceholderPages
 								"\t</head>\n"+
 								"\t<body>");
 								
-		toPlaceholderFile.println("<p>This is a placeholder for a page currently in the process of conversion.</p>");						
+		toPlaceholderFile.println("\t\t<p>This is a placeholder for a page currently in the process of conversion.</p>");						
+		
+		//putting assessment links if any into the page
+		String assessmentLink="&lt;problem\\surl_name=\"(?<aid>[a-z0-9]+)\"/&gt;";
+		Pattern pattern = Pattern.compile(assessmentLink);
+		Matcher matcher;
+		String hold = "";
+		
+		while(fromFile.hasNext())
+		{
+			hold=fromFile.nextLine();
+			if(hold.trim().matches(assessmentLink))
+			{
+				matcher = pattern.matcher(hold.trim());
+				matcher.matches();
+				toPlaceholderFile.println("\t\t<wb:inline idref=\"a_"+matcher.group("aid")+"\"/>");
+			}
+		}	
 								
 		//closing off
-		toPlaceholderFile.println("\t</body>"+
+		fromFile.close();
+		toPlaceholderFile.println("\t</body>\n"+
 									"</workbook_page>");
 		toPlaceholderFile.close();
 	} 
