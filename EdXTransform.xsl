@@ -10,7 +10,7 @@
         doctype-public="-//Carnegie Mellon University//DTD Workbook Page 3.8//EN"
         doctype-system="http://oli.web.cmu.edu/dtd/oli_workbook_page_3_8.dtd"
         indent="yes"
-        cdata-section-elements="codeblock"/> <!--THIS IS HERE TO CORRECTLY FORMAT OUTPUT FOR SOME KTH CODING CONTENT. IT WILL MAKE TEXT CONTENTS OF ALL CODEBLOCKS BE CDATA. TEMPORARILY REMOVE IF NOT WANTED-->
+    /> <!--cdata-section-elements="codeblock"--><!--THIS IS HERE TO CORRECTLY FORMAT OUTPUT FOR SOME KTH CODING CONTENT. IT WILL MAKE TEXT CONTENTS OF ALL CODEBLOCKS BE CDATA. TEMPORARILY REMOVE IF NOT WANTED-->
     
     <!--Setting up to find the LO file-->
     <xsl:variable name="fileid" select="workbook_page/@id"/>
@@ -181,7 +181,7 @@
     <!--video links. Looking at kth ramp i-->
     <xsl:template match="codeblock[@syntax='xml' and matches(normalize-space(text()[2]),'^&lt;video\surl_name=&quot;[0-9a-z]+&quot;/&gt;$', 's')]"> <!--right now they're in codeblocks; this looks for the right codeblocks with the right contents-->
         <xsl:variable name="videoid" select="./tokenize(text()[2],'&quot;')[2]"/> <!--get the video id-->
-        <xsl:variable name="videosection" select="document($videosfile)/videos/video[@url_name=$videoid]"/> <!--getting the relevant video's part in the file-->
+        <xsl:variable name="videosection" select="document($videosfile)/Videos/video[@url_name=$videoid]"/> <!--getting the relevant video's part in the file-->
         <!--if there's a youtube video, use that, otherwise link to the download links provided-->
         <xsl:choose>
             <xsl:when test="$videosection[(@youtube_id_1_0 and not(@youtube_id_1_0='')) or @youtube]"> <!--currently videos seem to have both if they have one, but not assuming (but the 1_0 can be empty, in which case it doesn't count)-->
