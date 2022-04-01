@@ -418,17 +418,23 @@
             <xsl:value-of select="."/>
         </p>
     </xsl:template>
+    <!--in Matematik, mass commented out divs earlier to solve an issue, so now the bare text is not in divs at this point. Still should be dealt with the same way.-->
+    <xsl:template match="section/text()[matches(.,'\S')] | body/text()[matches(.,'\S')]">
+        <p>
+            <xsl:value-of select="."/>
+        </p>
+    </xsl:template>
     
     <!--blockquotes don't allow paragraphs. At the moment making it a notation pullout; will consider more later-->
     <xsl:template match="blockquote[p]">
         <pullout type="notation"><xsl:apply-templates select="@* | node()"/></pullout>
     </xsl:template>
-    <!--had an issue like the bare text one, except it used to be in a span in a div, with a bold-->
+    <!--had an issue like the bare text one, except it used to be in a span in a div, with a bold--> <!--Matmatik also has some just bare bolds; adding in (think it only has b's, but being thorough)-->
         <!--bold and italics-->
-    <xsl:template match="div/strong | div/b | div/span/strong | div/span/b">
+    <xsl:template match="div/strong | div/b | div/span/strong | div/span/b | section/strong | section/b | body/strong | body/b">
         <p><em style="bold"><xsl:apply-templates select="@* | node()"/></em></p>
     </xsl:template>
-    <xsl:template match="div/i | div/em | div/span/i | div/span/em"> <!--POSSIBLY CHECK note, we also allow a plain em tag but it looks like it produces bold italics and html em is usually italics?-->
+    <xsl:template match="div/i | div/em | div/span/i | div/span/em | section/i | section/em | body/i | body/em"> <!--POSSIBLY CHECK note, we also allow a plain em tag but it looks like it produces bold italics and html em is usually italics?-->
         <p><em style="italic"><xsl:apply-templates select="@* | node()"/></em></p>
     </xsl:template>
     <!--basically table titles-->
